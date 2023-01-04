@@ -1,0 +1,3565 @@
+---
+output:
+  html_document:
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: yes
+    fig_width: 7
+    fig_height: 6
+resource_files:
+- hh_crosswalk.csv
+- Rad_Onc_Data.csv
+- Radiology_Data.csv
+- Radiology_Site_Mapping.csv
+- Epic Department Mapping Correction.csv
+- hh_crosswalk.csv
+- Radiology_Data.csv
+- Rad_Onc_Data.csv
+- Radiology_Site_Mapping.csv
+- Epic Department Mapping Correction.csv
+- open_encounters_exclusion.xlsx
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+<style type="text/css">
+div.main-container {
+  max-width: 2000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<style>
+.tocify {
+color: black;
+}
+<!-- } -->
+<!-- .tocify .tocify-header { -->
+<!--     position: fixed; -->
+<!--     <!-- top: 50px; --> -->
+<!--     left: 50px; -->
+<!--     width: 350px; -->
+<!--     <!-- border: solid 3px black; --> -->
+<!--     <!-- height: 200px; --> -->
+<!--  border: none; -->
+<!-- } -->
+.tocify .tocify-header .active {
+color: white;
+background: #d80b8c;
+font-weight: bold;
+}
+<!-- .tocify .tocify-item { -->
+<!-- background: white; -->
+<!-- color: black; -->
+<!--  border: none; -->
+<!-- } -->
+</style>
+<style>
+  .nav-pills>li>a:hover, .nav-pills>li>a:focus, .nav-pills>li.active>a,     .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus{
+     background-color: #212070;
+     }
+</style>
+<style>
+.container { width: 1800px; }
+h2 {
+  background-color: #dddedd;
+  color: black;
+  text-indent: 20px;
+  <!-- font-weight: bold; -->
+}
+h3 {
+  background-color: #f2f2f2;
+  color: black;
+  text-indent: 20px;
+  <!-- font-weight: bold; -->
+}
+h4 {
+  <!-- background-color: #dddedd; -->
+  <!-- color: black; -->
+  text-indent: 50px;
+  <!-- font-weight: bold; -->
+}
+</style>
+```{r Load Packages, echo = FALSE, warning = FALSE, message = FALSE}
+# Load packages -----------------------------------------------------------------------------------
+suppressMessages({
+  memory.limit(size = 10000000)
+  library(readxl)
+  library(writexl)
+  library(plyr)
+  library(dplyr)
+  library(data.table)
+  library(zoo)
+  library(shiny)
+  library(shinydashboard)
+  library(shinydashboardPlus)
+  library(shinyWidgets)
+  library(htmlwidgets)
+  library(lubridate)
+  library(tcltk)
+  library(tidyverse)
+  library(plotly)
+  library(knitr)
+  library(kableExtra)
+  library(leaflet)
+  library(grid)
+  library(gridExtra)
+  library(eeptools)
+  library(ggQC)
+  #library(zipcode)
+  library(utils)
+  library(scales)
+  library(chron)
+  library(bupaR)
+  library(shiny)
+  library(DT)
+  library(DiagrammeR)
+  library(shinyalert)
+  library(edeaR)
+  library(processmapR)
+  library(processmonitR)
+  library(processanimateR)
+  library(tidyr)
+  library(lubridate)
+  library(RColorBrewer)
+  library(DiagrammeR)
+  library(ggplot2)
+  library(leaflet)
+  library(readr)
+  library(highcharter)
+  library(ggforce) # for 'geom_arc_bar'
+  library(packcircles) # for packed circle graph
+  library(viridis)
+  library(ggiraph)
+  library(treemapify)
+  library(treemap)
+  library(broom)
+  library(extrafont)
+  library(tis) # for US holidays
+  library(vroom)
+  library(sjmisc)
+  library(tools)
+  library(here)
+  library(shinyBS)
+  library(shinyscreenshot)
+  library(fasttime)
+  library(shinycssloaders)
+  library(feather)
+  # library(zipcodeR)
+  library(formattable)
+  library(shinyjs)
+  library(janitor)
+  library(patchwork)
+  library(RODBC)
+  library(DBI)
+  library(odbc)
+})
+```
+
+
+```{r Graph asthetics, echo = FALSE, warning = FALSE, message = FALSE}
+### Color Functions for Graphs ============================================================
+# Mount Sinai corporate colors "USE THIS TO ADD COLORS"
+MountSinai_colors <- c(
+  `dark purple`  = "#212070",
+  `dark pink`    = "#d80b8c",
+  `dark blue`    = "#00aeef",
+  `dark grey`    = "#7f7f7f",
+  `yellow`       = "#ffc000",
+  `purple`       = "#7030a0",
+  `med purple`   = "#5753d0",
+  `med pink`     = "#f75dbe",
+  `med blue`     = "#5cd3ff",
+  `med grey`     = "#a5a7a5",
+  `light purple` = "#c7c6ef",
+  `light pink`   = "#fcc9e9",
+  `light blue`   = "#c9f0ff",
+  `light grey`   = "#dddedd"
+  )
+# Function to extract Mount Sinai colors as hex codes
+# Use Character names of MountSinai_colors
+MountSinai_cols <- function(...) {
+  cols <- c(...)
+  
+  if (is.null(cols))
+    return (MountSinai_colors)
+  
+  MountSinai_colors[cols]
+}
+# Color Function that can be used to call all colors is "MountSinai_cols()"
+# Use in ggplot 
+  #MountSinai_cols()       # will provide all colors and their hex codes in a table 
+  #MountSinai_cols("pink") # will provide color name and the hex code for the pink color
+# Create palettes 
+MountSinai_palettes <- list(
+  `all`   = MountSinai_cols("dark purple","dark pink","dark blue","dark grey",
+                            "med purple","med pink","med blue","med grey", 
+                            "light purple","light pink","light blue","light grey"),
+  
+  `main`  = MountSinai_cols("dark purple","dark pink","dark blue","dark grey"),
+  
+  `purple`  = MountSinai_cols("dark purple","med purple","light purple"),
+  
+  `pink`  = MountSinai_cols("dark pink","med pink","light pink"),
+  
+  `blue`  = MountSinai_cols("dark blue", "med blue", "light blue"),
+  
+  `grey`  = MountSinai_cols("dark grey", "med grey", "light grey"),
+  
+  `purpleGrey` = MountSinai_cols("dark purple", "dark grey"),
+  
+  `pinkBlue` = MountSinai_cols("dark pink", "dark blue")
+  
+)
+# MountSinai_palettes
+# Return function to interpolate a Mount Sinai color palette
+# default value is the main palette, reverse = True will change the order
+MountSinai_pal <- function(palette = "all", reverse = FALSE, ...) {
+  pal <- MountSinai_palettes[[palette]]
+  
+  if (reverse) pal <- rev(pal)
+  
+  colorRampPalette(pal, ...)
+}
+# Scale Function for ggplot can be used instead of scale_color_manual
+scale_color_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- MountSinai_pal(palette = palette, reverse = reverse)
+  
+  if (discrete) {
+    discrete_scale("colour", paste0("MountSinai_", palette), palette = pal, ...)
+  } else {
+    scale_color_gradientn(colours = pal(256), ...)
+  }
+}
+# Scale Fill for ggplot insetead of scale_fill_manual 
+scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FALSE, ...) {
+  pal <- MountSinai_pal(palette = palette, reverse = reverse)
+  if (discrete) {
+    discrete_scale("fill", paste0("MountSinai_", palette), palette = pal, ...)
+  } else {
+    scale_fill_gradientn(colours = pal(256), ...)
+  }
+}
+# Use in ggplot 
+  # scale_color_MountSinai("main")
+```
+
+
+```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
+'%!in%' <- function(x,y)!('%in%'(x,y))
+inc_sites <- c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD")
+
+
+scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
+  filter(!is.na(Campus)) %>%
+  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD"))
+
+# scheduling_data_raw <- as.data.frame(readRDS(file.choose())) %>%
+#   filter(!is.na(Campus)) %>%
+#   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD"))
+
+date_start <- as.Date("2022-01-01", format="%Y-%m-%d")
+date_end <- as.Date(max(scheduling_data_raw$Appt.Made.DTTM), format="%Y-%m-%d")
+# date_start <- as.Date(paste0(format(as.Date(date_end) - 365, "%Y-%m"),"-01"), format="%Y-%m-%d")
+```
+
+
+```{r Process Corrected Epic Departments, echo = FALSE, warning = FALSE, message = FALSE}
+# epic_dept_corrected <- read_csv("Epic Department Mapping Correction.csv")
+# 
+# scheduling_data_raw <- merge(scheduling_data_raw, epic_dept_corrected[,c("Campus","Campus.Specialty","Department","Campus Corrected")])
+# scheduling_data_raw <- scheduling_data_raw %>%
+#   mutate(Campus = ifelse(is.na(`Campus Corrected`) | `Campus Corrected` == "DEACTIVATE", Campus, `Campus Corrected`)) %>%
+#   dplyr::select(-`Campus Corrected`)
+```
+
+
+```{r Import HH Data, echo = FALSE, warning = FALSE, message = FALSE}
+# con_hh <- odbcConnect("handhygiene") # Connect to Server
+# hh_data_comp_raw <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp") # Master Referrals Data
+# 
+# hh_data_comp_raw_pt_entry <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP") # Master Referrals Data
+
+# Import Referrals+Visit Data --------------------------------------------------
+con_hh <- dbConnect(odbc(),
+                    Driver = "SQLServer",
+                    Server = "10.2.42.69",
+                    UID = "kweons01",
+                    PWD = "Pasword01#PasPasword01#Pas",
+                    Port = 1433)     
+hh_data_comp_raw <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp")
+hh_data_comp_raw <- as.data.frame(hh_data_comp_raw)
+
+hh_data_comp_raw_pt_entry <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP")
+hh_data_comp_raw_pt_entry <- as.data.frame(hh_data_comp_raw_pt_entry)
+# hh_data_comp_raw <- hh_data_comp_raw %>%
+#   mutate_all(as.character) %>%
+#   mutate(record_id = as.numeric(record_id),
+#          unit_complete = as.numeric(unit_complete))
+
+
+
+# write.csv(hh_data_comp_raw, "/nfs/data/Applications/Ambulatory/hh_crosswalk.csv", row.names=FALSE)
+
+# hh_data_comp_raw_csv <-  as.data.frame(read_csv("/nfs/data/Applications/Ambulatory/hh_comp.csv"))
+hh_crosswalk <- as.data.frame(read_csv("/nfs/data/Applications/Ambulatory/hh_crosswalk.csv"))
+# hh_data_comp_raw_csv <-  as.data.frame(read_csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/hh_comp.csv"))
+# hh_crosswalk <- as.data.frame(read_csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/hh_crosswalk.csv"))
+
+ 
+```
+
+
+```{r Radiology and Rad Onc Data, echo = FALSE, warning = FALSE, message = FALSE}
+rad_onc_data_raw <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Rad_Onc_Data.csv"))
+radiology_data_raw <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Radiology_Data.csv"))
+radiology_ref <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Radiology_Site_Mapping.csv"))
+# rad_onc_data_raw <- as.data.frame(read.csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/Rad_Onc_Data.csv"))
+# radiology_data_raw <- as.data.frame(read.csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/Radiology_Data.csv"))
+# radiology_ref <- as.data.frame(read.csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/Radiology_Site_Mapping.csv"))
+# Process Radiology + Rad Onc Data
+rad_onc_data_raw <- rad_onc_data_raw %>%
+  mutate_at(c('MSBI', 'MSH.MSDFP', 'MSUS', 'MSW'), as.numeric) %>%
+  mutate(Campus.Specialty = "Radiation Oncology",
+         Department = "Radiation Oncology",
+         Appt.Year = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%Y"),
+         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%m")),
+         Appt.Month = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%b"),
+         Visit.Method = "IN PERSON") %>%
+  dplyr::select(-Month) %>%
+  pivot_longer(MSBI:MSW,
+               names_to = "Campus",
+               values_to = "monthly_vol") %>%
+  mutate(Campus = ifelse(Campus == "MSH.MSDFP","MSH-MSDFP",Campus))
+# Process Radiology Data
+radiology_data_raw[,2:length(radiology_data_raw)] <-lapply(radiology_data_raw[,2:length(radiology_data_raw)],as.numeric)
+radiology_data_raw <- radiology_data_raw %>%
+  pivot_longer(BC:UC,
+               names_to = "Campus",
+               values_to = "monthly_vol")
+radiology_data_raw$Campus <- radiology_ref$Campus[match(radiology_data_raw$Campus, radiology_ref$ID)]
+radiology_data_raw <- radiology_data_raw %>%
+  group_by(Month, Campus) %>%
+  summarise(monthly_vol = sum(monthly_vol)) %>%
+  mutate(Campus.Specialty = "Radiology",
+         Department = "Radiology",
+         Appt.Year = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%Y"),
+         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%m")),
+         Appt.Month = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%b"),
+         Visit.Method = "IN PERSON") %>%
+  dplyr::select(-Month) %>%
+  arrange(Appt.Year, Appt.MonNum)
+rad_radOnc_data <- bind_rows(rad_onc_data_raw, radiology_data_raw)
+rad_radOnc_data <- rad_radOnc_data %>%
+  mutate(Campus = toupper(Campus)) %>%
+  filter(Campus %!in% c("OTHER", "MSQ", "MS NOW", "NYEE")) %>%
+  filter(Appt.Year %in% c(format(as.Date(date_start),"%Y"),format(as.Date(date_end),"%Y"))) %>%
+  group_by(Campus, Appt.Year, Appt.Month) %>%
+  summarise(total = sum(monthly_vol)) %>%
+  filter(Campus %in% inc_sites)
+rad_onc_date <- paste0(rad_onc_data_raw[nrow(rad_onc_data_raw),"Appt.Month"],", ", rad_onc_data_raw[nrow(rad_onc_data_raw),"Appt.Year"])
+radiology_date <- paste0(radiology_data_raw[nrow(radiology_data_raw),"Appt.Month"],", ", radiology_data_raw[nrow(radiology_data_raw),"Appt.Year"])
+```
+
+
+```{r Hand Hygiene Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
+colnames(hh_data_comp_raw) <- tolower(colnames(hh_data_comp_raw))
+# colnames(hh_data_comp_raw)[which(colnames(hh_data_comp_raw) == "data_date")] <- "date"
+# Map MSD units
+hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSD",
+                                hh_crosswalk$unit[match(hh_data_comp_raw$msd_unit, hh_crosswalk$Location)], hh_data_comp_raw$site)
+# Map msh_unit
+hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSH",
+                                hh_crosswalk$unit[match(hh_data_comp_raw$msh_unit, hh_crosswalk$Location)], hh_data_comp_raw$site)
+hh_data_comp <- hh_data_comp_raw %>%
+  dplyr::select(-language) %>%
+  pivot_longer(
+    c("msb_unit","msh_unit","msd_unit","nyee_unit","msq_unit","msm_unit","msw_unit","net_unit"),
+    names_to = "unit_site",
+    values_to = "unit"
+  ) %>%
+  filter(date != "NULL") %>%
+  mutate_if(is.numeric, as.character) %>%
+  filter(!is.na(site))
+
+
+# Process patient entered data -------------------------------------------------
+colnames(hh_data_comp_raw_pt_entry) <- tolower(colnames(hh_data_comp_raw_pt_entry))
+hh_data_comp_pt_entry <- hh_data_comp_raw_pt_entry %>%
+  rename(date = data_date) %>%
+  mutate_if(is.numeric, as.character) 
+
+hh_data_comp_pt_entry$date <- as.character(hh_data_comp_pt_entry$date)
+
+
+hh_data_comp <- bind_rows(hh_data_comp, hh_data_comp_pt_entry)
+
+
+
+# datatable(hh_data_comp, extensions = "Buttons", 
+#             options = list(paging = TRUE,
+#                            scrollX=TRUE, 
+#                            searching = TRUE,
+#                            ordering = TRUE,
+#                            dom = 'Bfrtip',
+#                            buttons = c('copy', 'csv', 'excel', 'pdf'),
+#                            pageLength=5, 
+#                            lengthMenu=c(3,5,10) ))
+
+hh_data_merged <- hh_data_comp %>%
+  filter(!site %in% c("MS NOW", "MSHP", "NYEE", "MSQ","OTHER","MSB")) %>%
+  filter(!is.na(site)) %>%
+  select(site, unit, date, worker___1, worker___2, worker___3, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
+  mutate(across(4:12, as.numeric)) %>%
+  mutate_if(is.numeric, ~ifelse(is.na(.),0,.)) %>%
+  mutate_if(is.numeric, ~ifelse(.==2,0,.)) %>%
+  group_by(site, unit, date) %>%
+  summarise(worker___1 = sum(worker___1),
+            worker___2 = sum(worker___2),
+            worker___3 = sum(worker___3),
+            provider_hands_bef = sum(provider_hands_bef),
+            provider_hands_aft = sum(provider_hands_aft),
+            nurse_hands_bef = sum(nurse_hands_bef),
+            nurse_hands_aft = sum(nurse_hands_aft),
+            mt_hands_bef = sum(mt_hands_bef),
+            mt_hands_aft = sum(mt_hands_aft)) %>%
+  mutate(date = as.Date(date, "%Y-%m-%d"),
+         Appt.Year = as.numeric(format(as.Date(date, "%Y-%m-%d"),"%Y")),
+         Appt.WeekNum = lubridate::epiweek(as.Date(date, "%Y-%m-%d")))
+hh_data_merged_role <- hh_data_comp %>%
+  filter(!site %in% c("MS NOW", "MSHP", "NYEE", "MSQ","OTHER")) %>%
+  filter(!is.na(site)) %>%
+  select(site, unit, date, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
+  pivot_longer(provider_hands_bef: mt_hands_aft,
+               names_to = "role",
+               values_to = "compliance") %>%
+  mutate(date = as.Date(date, "%Y-%m-%d"),
+         Appt.Year = as.numeric(format(as.Date(date, "%Y-%m-%d"),"%Y")),
+         Appt.WeekNum = lubridate::epiweek(as.Date(date, "%m/%d/%Y")),
+         compliance = ifelse(compliance == 2,0,compliance)) %>%
+  filter(compliance != "") %>%
+# filter(!is.na(compliance)) %>%
+  filter(compliance != 2) %>%
+  group_by(site, unit, date, Appt.Year, Appt.WeekNum, role, compliance) %>%
+  summarise(total_obs = n())%>%
+  mutate(compliance = ifelse(compliance == 0, "No", "Yes"),
+         total_obs = as.numeric(total_obs)) %>%
+  pivot_wider(
+    names_from = compliance,
+    values_from = total_obs,
+    values_fill=list(total_obs=0)) %>%
+    mutate(total_obs = Yes + No)
+  
+
+# datatable(hh_data_merged_role, extensions = "Buttons", 
+#             options = list(paging = TRUE,
+#                            scrollX=TRUE, 
+#                            searching = TRUE,
+#                            ordering = TRUE,
+#                            dom = 'Bfrtip',
+#                            buttons = c('copy', 'csv', 'excel', 'pdf'),
+#                            pageLength=5, 
+#                            lengthMenu=c(3,5,10) ))
+
+
+
+# str(hh_data_merged_role)
+
+# # Change NET to NETWORK
+hh_data_merged <- hh_data_merged %>%
+  mutate(site = ifelse(site == "NET","NETWORK",site)) %>%
+  arrange(date) %>%
+  filter(unit != "NULL")
+hh_data_merged_role <- hh_data_merged_role %>%
+  mutate(site = ifelse(site == "NET","NETWORK",site)) %>%
+  arrange(date) %>%
+  filter(unit != "NULL")
+hh_data_merged <- hh_data_merged %>%
+  mutate(site = ifelse(unit == "UCC", "MSUS",site))
+
+```
+
+
+
+```{r Data ExportinG csv, echo = FALSE, warning = FALSE, message = FALSE}
+# vol_2022_export <- scheduling_data_raw_2 %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Appt.Year == "2022") %>%
+#   group_by(Campus, Department, Appt.Year) %>%
+#   summarise(`2022 Completed Visits` = n())
+#
+# monthly_vol_2022_export <-  scheduling_data_raw_2 %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   group_by(Campus, Department, Appt.MonthYear) %>%
+#   summarise(`2022 Completed Visits` = n()) %>%
+#   pivot_wider(
+#     names_from = Appt.MonthYear,
+#     values_from = '2022 Completed Visits'
+#   )
+#
+# write_csv(vol_2022_export, "2022 Ambulatory Volume.csv")
+# write_csv(monthly_vol_2022_export, "YTD Monthly Ambulatory Volume.csv")
+#
+# check <- scheduling_data_raw_2 %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   group_by(Campus, Appt.MonthYear) %>%
+#   summarise(`2022 Completed Visits` = n())
+```
+
+
+```{r Set Variables, echo = FALSE, warning = FALSE, message = FALSE}
+# Set up crosswalk for Week Number and Week Starting Date (Monday)
+# weekNum_monday <- scheduling_data_raw %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   filter(Appt.Day == "Mon") %>%
+#   mutate(Appt.WeekNum = as.numeric(strftime(Appt.DateYear, format = "%V"))) %>%
+#   select(Appt.Year, Appt.WeekNum, Appt.Day, Appt.DateYear) %>%
+#   distinct() %>%
+#   arrange(Appt.DateYear)
+# # weekNum_monday <- tail(weekNum_monday, 58)
+#
+# # Set Variables
+# report_run_date <- Sys.time()
+#
+# todays_date <- (tail(weekNum_monday,1))$Appt.DateYear
+# todays_year <- strftime(todays_date, format = "%Y")
+# todays_week <- as.numeric(strftime(todays_date, format = "%V"))
+# past_4_wks <- tail(weekNum_monday, 4)
+# past_5_wks <- tail(weekNum_monday, 5)
+# past_year <- weekNum_monday %>%
+#   filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum))
+#
+# reporting_week <- as.Date(paste(todays_year, todays_week, 1, sep="-"), "%Y-%U-%u")
+weekNum_sunday <- scheduling_data_raw %>%
+  filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  filter(Appt.Day == "Sun") %>%
+  mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear)) %>%
+  dplyr::select(Appt.Year, Appt.WeekNum, Appt.Day, Appt.DateYear) %>%
+  distinct() %>%
+  arrange(Appt.DateYear)
+# weekNum_sunday <- head(weekNum_sunday, -1)
+# Set Variables
+report_run_date <- Sys.Date()
+todays_date <- (tail(weekNum_sunday,1))$Appt.DateYear
+todays_year <- strftime(todays_date, format = "%Y")
+todays_week <- (tail(weekNum_sunday,1))$Appt.DateYear
+past_4_wks <- tail(weekNum_sunday, 4)
+past_5_wks <- tail(weekNum_sunday, 5)
+past_year <- weekNum_sunday %>%
+  filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum))
+reporting_week <- paste0("from Sunday, ",todays_date, " to Saturday, ",todays_date+6)
+```
+
+
+```{r Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
+# Scheduling Data
+scheduling_data <- scheduling_data_raw %>%
+  filter(!Campus %in% c("MSB", "MS NOW", "MSHP", "NYEE", "MSQ","OTHER","INPATIENT")) %>%
+  filter(!is.na(Campus))
+  
+rm(scheduling_data_raw)
+invisible(gc())
+
+scheduling_data <- scheduling_data %>%
+  mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear),
+         Visit.Method  = case_when(Visit.Method == "IN PERSON" ~ 'IN PERSON',TRUE ~ 'TELEHEALTH'),
+         New.PT2 = case_when(New.PT2 == "New" ~ 'New', TRUE ~ 'Established'),
+         New.PT3 = case_when(New.PT3 == "TRUE" ~ 'New',TRUE ~ 'Established'),
+         enc.status = case_when(ENC_CLOSED_CHARGE_STATUS %in% c("OPEN", "CLOSED BUT COSIGN NEEDED") ~ 'OPEN',TRUE ~ 'CLOSED'),
+         open.hours = ifelse(enc.status == "OPEN",
+                             as.numeric(round(difftime(max(date_end)+1, Appt.DTTM, units = "hours"))),
+                             as.numeric(round(difftime(Y_ENC_CLOSE_TIME, Appt.DTTM, units = "hours")))),
+         open.days = round(open.hours/24)) %>%
+   mutate(Appt.Made.DateYear = as.Date(Appt.Made.DTTM, format="%Y-%m-%d"),
+          Appt.Made.MonthYear = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"),
+          Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+          Appt.Made.WeekNum = as.numeric(strftime(Appt.Made.DTTM, format = "%V")))
+
+# Missing Charges (Update when mater data is re-processed)
+business_days <- seq(date_start, date_end, by="days")[!is.weekend(seq(date_start, date_end, by="days"))]
+missing_chg_cutOff <- business_days[length(business_days)-3] # Should this be 2 or 3?
+```
+
+
+```{r Epic Department Mapping Processing, echo = FALSE, warning = FALSE, message = FALSE}
+epic_depts <- scheduling_data %>%
+  group_by(Campus, Campus.Specialty, Department) %>%
+  summarise(total = n()) %>%
+  dplyr::select(-total) %>%
+  arrange(Campus, Campus.Specialty, Department)
+epic_depts_site <- function(site){
+
+  epic_depts %>%
+    filter(Campus == site) %>%
+    select(everything()) %>%
+    kable(escape = F, align = "l") %>%
+    kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+    add_header_above(c("Epic Department Mapping" = length(epic_depts)),
+                     background = "#221f72", color = "white", font_size = 14) %>%
+    column_spec(1:2, width = "300px") %>%
+    collapse_rows(1:2, valign="top")
+}
+
+invisible(gc())
+```
+
+
+```{r Volume Metrics Data, echo = FALSE, warning = FALSE, message = FALSE}
+# Volume Data
+vol_past_month <- scheduling_data %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  filter(Appt.WeekNum %in% unique(past_year$Appt.WeekNum)) %>%
+  arrange(Appt.Year, Appt.WeekNum) %>%
+  group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = n()) %>%
+  pivot_wider(
+    names_from = Visit.Method,
+    values_from = weekly_vol,
+    values_fill=list(weekly_vol=0)
+  ) %>%
+  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
+  pivot_longer(
+    6:8,
+    names_to = "Visit.Method",
+    values_to = "weekly_vol"
+  ) %>%
+  mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
+invisible(gc())
+
+```
+
+
+```{r Primary Care Time to Appointment Data, echo = FALSE, warning = FALSE, message = FALSE}
+# Time to Appointment
+# time_to_appt_all <- merge(past_year_data, past_4_wks[,c("Appt.Year","Appt.WeekNum")])
+# time_to_appt_all <- scheduling_data %>%
+#   # mutate(Appt.Made.DateYear = as.Date(Appt.Made.DTTM, format="%Y-%m-%d"),
+#   #       Appt.Made.MonthYear = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"),
+#   #       Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+#   #       Appt.Made.WeekNum = as.numeric(strftime(Appt.Made.DTTM, format = "%V"))) %>%
+#   filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+#   filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   # mutate(Wait.Time = as.numeric(round(difftime(Appt.DTTM, Appt.Made.DTTM,  units = "days")))) %>%
+#   filter(Wait.Time >= 0) %>%
+#   # filter(!is.na(New.PT2)) %>%
+#   # mutate(New.PT2 = case_when(New.PT2 == "TRUE" ~ 'New'
+#   #                                  ,TRUE ~ 'Established')) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time))
+```
+
+
+```{r No Show Data, echo = FALSE, warning = FALSE, message = FALSE}
+# No Show Data
+# no_show_rate <- merge(past_year_data, past_4_wks[,c("Appt.Year","Appt.WeekNum")])
+# no_show_rate <- scheduling_data %>%
+#   filter(Appt.Year %in% unique(past_4_wks$Appt.Year)) %>%
+#   filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+#   filter(Appt.Status %in% c("Arrived","No Show")) %>%
+#   arrange(Appt.Year, Appt.WeekNum) %>%
+#   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method, Appt.Status) %>%
+#   summarise(weekly_vol = n()) %>%
+#   mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
+```
+
+
+```{r Sinai Logo, echo=FALSE, out.width = '30%'}
+knitr::include_graphics("Mount_Sinai_Logo_H.png")
+```
+
+
+```{r}
+# 
+# missing_chg_data <- scheduling_data %>%
+#   filter(Appt.Year == "2023") %>%
+#   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   # filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Resource == "Provider") %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO") 
+# 
+# missing_chg_data_msm <- missing_chg_data %>%
+#   filter(Campus == "MSM")
+# 
+# write_xlsx(missing_chg_data_msm,"missing_chg_data_msm.xlsx")
+# 
+# 
+# missing_chg_data_msm_trend <- missing_chg_data_msm %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   mutate(clo.7days = case_when(open.days <= 7 ~ 'YES', TRUE ~ 'NO')) %>%
+#   group_by(Campus, Appt.MonthYear, enc.status, clo.7days) %>%
+#   summarise(total = n()) %>%
+#    group_by(Campus, Appt.MonthYear) %>%
+#   mutate(total.enc = sum(total)) %>%
+#   pivot_wider(names_from = clo.7days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
+#   filter(enc.status == "CLOSED")
+
+```
+
+# System Huddle Ambulatory Report
+*Report run date: `r report_run_date`*<br/>
+*Report produced for week of `r reporting_week`*<br/>
+*Rad Onc and Radiology data is included only in monthly volumes.*<br/>
+*A Full week is comprised of Sunday to Saturday.*<br/>
+*Data excludes eIDX, MD Office data.*<br/>
+________________________________________________________________________________________________________________________________________________
+<br/>
+
+## Metrics Overview
+### 1.Open Encounters Trending
+
+```{r Open Encounters Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+site_cols <- c("#212070","#d80b8c","#00aeef","#7f7f7f","#ffc000","#7030a0","#c7c6ef","#fcc9e9","#c9f0ff","#dddedd")
+# Import in exclusion criteria
+# Exclude ECHO encounters
+missing_exc_dept <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_dept.xlsx")
+missing_exc_resource <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_res.xlsx")
+missing_exc_visitType <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_visit.xlsx")
+# missing_exc_dept <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/open_encounters_exclusion_dept.xlsx")
+# missing_exc_resource <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/open_encounters_exclusion_res.xlsx")
+# missing_exc_visitType <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/open_encounters_exclusion_visit.xlsx")
+# Based on Metric % Encounters Closed within 7 days
+# Missing Charges Trending by Site
+# missing_chg_data_trend <- scheduling_data %>%
+#   filter(Appt.Year == 2023) %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Resource == "Provider") %>%
+#   filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#    mutate(clo.7days = case_when(open.days <= 7 ~ 'YES', TRUE ~ 'NO')) %>%
+#   # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
+#   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO") %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   group_by(Campus, Appt.MonthYear, enc.status, clo.7days) %>%
+#   summarise(total = n()) %>%
+#    group_by(Campus, Appt.MonthYear) %>%
+#   mutate(total.enc = sum(total)) %>%
+#   pivot_wider(names_from = clo.7days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
+#   filter(enc.status == "CLOSED")
+# 
+# invisible(gc())
+
+missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
+```
+
+
+```{r Open Encounters Metric Trending by Site Output, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+# Total Encounters and % Closed within 7 Days by Site
+map(unique(missing_chg_data_trend$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Encounters"), lineWidth = 3),
+    list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (missing_chg_data_trend %>% filter(Campus == x))$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Encounters",
+                data = (missing_chg_data_trend %>% filter(Campus == x))$total.enc,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Encounters Closed <=7 Days",
+                data = (missing_chg_data_trend %>% filter(Campus == x))$clo.7days.perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % Encounters Closed <=7 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Excludes Radiology and Rad Onc visits <br>",
+                            "Includes Epic provider visits only <br>",
+                            "Based on visits from ",date_start," to ",missing_chg_cutOff),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+# # Based on Metric % Encounters Open > 7 days
+# # Missing Charges Trending by Site
+# missing_chg_data_trend <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   mutate(open.7days = case_when(open.days > 7 ~ 'YES', TRUE ~ 'NO')) %>%
+#   group_by(Campus, Appt.MonthYear, open.7days) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = open.7days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(total.enc = YES + NO,
+#          open.7days.perc = round((YES/(total.enc))*100,0))
+#
+# missing_chg_data_trend_downtown <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
+#   mutate(Campus = "MS Downtown") %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   mutate(open.7days = case_when(open.days > 7 ~ 'YES', TRUE ~ 'NO')) %>%
+#   group_by(Campus, Appt.MonthYear, open.7days) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = open.7days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(total.enc = YES + NO,
+#          open.7days.perc = round((YES/(total.enc))*100,0))
+#
+#
+# # Total Encounters and % Closed within 7 Days by Site
+# map(unique(missing_chg_data_trend$Campus), function(x){
+# highchart() %>%
+#   hc_yAxis_multiples(
+#     list(title = list(text = "Total Encounters"), lineWidth = 3),
+#     list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+#   ) %>%
+#   hc_xAxis(title = list(text = ""),
+#            categories = missing_chg_data_trend$Appt.MonthYear,
+#            type = "datetime",
+#            labels = list(format = '{value:%m/%d}')
+#            # dateTimeLabelFormats = list(month = '%Y-%m')
+#            ) %>%
+#   hc_add_series(name = "Total Encounters",
+#                 data = (missing_chg_data_trend %>% filter(Campus == x))$total.enc,
+#                 type = 'column',
+#                 color='#212070',
+#                 dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+#   hc_add_series(name = "% Encounters Open >7 Days",
+#                 data = (missing_chg_data_trend %>% filter(Campus == x))$open.7days.perc,
+#                 type = "line", yAxis = 1,
+#                 color='#d80b8c',
+#                 lineColor='#d80b8c',
+#                 dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+#   hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+#   hc_title(text = paste0(x, " - % Encounters Open >7 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+#   hc_subtitle(text = paste0("Excludes Radiology and Rad Onc visits <br>","Based on visits from ",date_start," to ",missing_chg_cutOff),
+#               align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+#   hc_tooltip(shared = TRUE, borderColor = "black")
+# }) %>%
+#   hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+
+invisible(gc())
+
+```
+
+--------------------------------------------------------------------------------
+```{r Open Encounters Metric Trending Summarized, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+
+
+# missing_chg_data_trend_downtown <- scheduling_data %>%
+#    filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Resource == "Provider") %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO") %>%
+#   filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
+#   mutate(Campus = "MS Downtown") %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   mutate(clo.7days = case_when(open.days <= 7 ~ 'YES', TRUE ~ 'NO')) %>%
+#   group_by(Campus, Appt.MonthYear, enc.status, clo.7days) %>%
+#   summarise(total = n()) %>%
+#    group_by(Campus, Appt.MonthYear) %>%
+#   mutate(total.enc = sum(total)) %>%
+#   pivot_wider(names_from = clo.7days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
+#   filter(enc.status == "CLOSED")
+
+missing_chg_data_trend_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_downtown.rds")) 
+
+invisible(gc())
+
+# Based on Metric % Encounteres Closed <=7 days
+map(unique(missing_chg_data_trend_downtown$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Encounters"), lineWidth = 3),
+    list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = missing_chg_data_trend_downtown$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Encounters",
+                data = (missing_chg_data_trend_downtown %>% filter(Campus == x))$total.enc,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Encounters Closed <=7 Days",
+                data = (missing_chg_data_trend_downtown %>% filter(Campus == x))$clo.7days.perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % Encounters Closed <=7 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Includes MSUS, MSDD, and MSBI <br>",
+                            "Includes Epic provider visits only <br>",
+                            "Excludes Radiology and Rad Onc visits <br>", "Based on visits from ",date_start," to ",missing_chg_cutOff),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
+# # Based on Metric % Encounteres Open >7 days
+# map(unique(missing_chg_data_trend_downtown$Campus), function(x){
+# highchart() %>%
+#   hc_yAxis_multiples(
+#     list(title = list(text = "Total Encounters"), lineWidth = 3),
+#     list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+#   ) %>%
+#   hc_xAxis(title = list(text = ""),
+#            categories = missing_chg_data_trend_downtown$Appt.MonthYear,
+#            type = "datetime",
+#            labels = list(format = '{value:%m/%d}')
+#            # dateTimeLabelFormats = list(month = '%Y-%m')
+#            ) %>%
+#   hc_add_series(name = "Total Encounters",
+#                 data = (missing_chg_data_trend_downtown %>% filter(Campus == x))$total.enc,
+#                 type = 'column',
+#                 color='#212070',
+#                 dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+#   hc_add_series(name = "% Encounters Open >7 Days",
+#                 data = (missing_chg_data_trend_downtown %>% filter(Campus == x))$open.7days.perc,
+#                 type = "line", yAxis = 1,
+#                 color='#d80b8c',
+#                 lineColor='#d80b8c',
+#                 dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+#   hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+#   hc_title(text = paste0(x, " - % Encounters Open >7 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+#   hc_subtitle(text = paste0("Includes MSUS, MSDD, and MSBI <br>","Excludes Radiology and Rad Onc visits <br>", "Based on visits from ",date_start," to ",missing_chg_cutOff),
+#               align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+#   hc_tooltip(shared = TRUE, borderColor = "black")
+# }) %>%
+#   hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
+
+rm(missing_chg_data_trend)
+rm(missing_chg_data_trend_downtown)
+invisible(gc())
+```
+
+### 2. Visit Volume Variance Trending
+```{r Volume Variance to 2019 Metric Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
+monthOptions <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+vol_trending <- scheduling_data %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  group_by(Campus, Appt.Year, Appt.Month) %>%
+  summarise(total = n())
+# Merge with radiology and rad onc monthly volume
+vol_trending <- bind_rows(vol_trending, rad_radOnc_data)
+vol_trending <- vol_trending %>%
+  group_by(Campus, Appt.Year, Appt.Month) %>%
+  summarise(total = sum(total)) %>%
+  pivot_wider(names_from = Appt.Year,
+              values_from = total) %>%
+  # mutate(target_5_perc = round(`2022`*1.05)) %>%
+  arrange(factor(Appt.Month, levels = monthOptions)) %>%
+  arrange(Campus) %>%
+  mutate(perc_change = round(((`2023` - `2022`)/`2022`)*100, 0))
+map(unique(vol_trending$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Visits"), lineWidth = 3, min = 0),
+    list(title = list(text = "% Change from Prior Year"), min = -50,max=200,
+           labels = list(format = '{value}%'),
+           showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (vol_trending %>% filter(Campus == x))$Appt.Month,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name   = "2022 Total Visits",
+                data   = (vol_trending %>% filter(Campus == x))$`2022`,
+                # type = 'column',
+                # color = '#a5a7a5'
+                marker = list(enabled= TRUE),
+                color='#a5a7a5',
+                lineWidth=3,
+                lineColor='#a5a7a5'
+                ) %>%
+  hc_add_series(name = "2023 Total Visits",
+                data   = (vol_trending %>% filter(Campus == x))$`2023`,
+                marker = list(enabled= TRUE),
+                color='#212070',
+                lineWidth=3,
+                lineColor='#212070'
+                ) %>%
+  hc_add_series(name = "% Change from Prior Year",
+                data = (vol_trending %>% filter(Campus == x))$perc_change,
+                type = "column", yAxis = 1,
+                                zones = list(list(value = 0,
+                                  color = 'red')),
+                color='#00b800',
+                # lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+    hc_title(text = paste0(x, " - Visit Volume Variance"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+    hc_subtitle(text = paste0("Includes Radiology and Rad Onc visits up to ",radiology_date,"<br> Based on visits from ",date_start," to ",date_end),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+    hc_tooltip(shared = TRUE, borderColor = "black")
+  }) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+
+```
+
+--------------------------------------------------------------------------------
+```{r Volume Variance to 2019 Metric Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
+vol_trending_downtown <- vol_trending %>%
+  filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
+  mutate(Campus = "MS Downtown") %>%
+  dplyr::select(-perc_change) %>%
+  pivot_longer(3:4,
+               names_to = "Appt.Year",
+               values_to = "total") %>%
+  group_by(Campus, Appt.Year, Appt.Month) %>%
+  summarise(total = sum(total)) %>%
+  pivot_wider(names_from = Appt.Year,
+              values_from = total) %>%
+  # mutate(target_5_perc = round(`2022`*1.05)) %>%
+  arrange(factor(Appt.Month, levels = monthOptions)) %>%
+  arrange(Campus) %>%
+  mutate(perc_change = round(((`2023` - `2022`)/`2022`)*100, 0))
+map(unique(vol_trending_downtown$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Visits"), lineWidth = 3, min = 0),
+    list(title = list(text = "% Change from Prior Year"), min = -50,max=200,
+           labels = list(format = '{value}%'),
+           showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (vol_trending_downtown %>% filter(Campus == x))$Appt.Month,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name   = "2022 Total Visits",
+                data   = (vol_trending_downtown %>% filter(Campus == x))$`2022`,
+                # type = 'column',
+                # color = '#a5a7a5'
+                marker = list(enabled= TRUE),
+                color='#a5a7a5',
+                lineWidth=3,
+                lineColor='#a5a7a5'
+                ) %>%
+  hc_add_series(name = "2023 Total Visits",
+                data   = (vol_trending_downtown %>% filter(Campus == x))$`2023`,
+                marker = list(enabled= TRUE),
+                color='#212070',
+                lineWidth=3,
+                lineColor='#212070'
+                ) %>%
+  hc_add_series(name = "% Change from Prior Year",
+                data = (vol_trending_downtown %>% filter(Campus == x))$perc_change,
+                type = "column", yAxis = 1,
+                                zones = list(list(value = 0,
+                                  color = 'red')),
+                color='#00b800',
+                # lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+    hc_title(text = paste0(x, " - Visit Volume Variance"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+    hc_subtitle(text = paste0("Includes MSUS, MSDD, and MSBI <br>","Includes Radiology and Rad Onc visits up to ",radiology_date,
+                              "<br> Based on visits from ",date_start," to ",date_end),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+    hc_tooltip(shared = TRUE, borderColor = "black")
+  }) %>%
+  hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
+
+
+rm(vol_trending)
+rm(vol_trending_downtown)
+invisible(gc())
+```
+
+### 3. New Patient Ratio Trending
+```{r New Patient Volume Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
+# new_vol_trending <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Appt.Year == 2023) %>%
+#   filter(Appt.DateYear <= date_end) %>%
+#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+#   group_by(Campus, Appt.MonthYear, New.PT2) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = New.PT2,
+#               values_from = total) %>%
+#   mutate(total_vol = New + Established,
+#          new_perc = round((New/(total_vol))*100,0))
+
+new_vol_trending <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending.rds")) 
+
+map(unique(new_vol_trending$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Visits"), lineWidth = 3),
+    list(title = list(text = "% of New Visits"), labels = list(format = '{value}%'),
+         showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (new_vol_trending %>% filter(Campus == x))$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Visits",
+                data = (new_vol_trending %>% filter(Campus == x))$total_vol,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% New Visits",
+                data = (new_vol_trending %>% filter(Campus == x))$new_perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % New Visits"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Excludes Radiology and Rad Onc visits <br>", "Based on visits from 2023-01-01"," to ",date_end),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+```
+
+--------------------------------------------------------------------------------
+```{r New Patient Volume Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
+# new_vol_trending_downtown <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
+#   mutate(Campus = "MS Downtown") %>%
+#   filter(Appt.Year == 2023) %>%
+#   filter(Appt.DateYear <= date_end) %>%
+#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+#   group_by(Campus, Appt.MonthYear, New.PT2) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = New.PT2,
+#               values_from = total) %>%
+#   mutate(total_vol = New + Established,
+#          new_perc = round((New/(total_vol))*100,0))
+
+new_vol_trending_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending_downtown.rds")) 
+
+map(unique(new_vol_trending_downtown$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Visits"), lineWidth = 3),
+    list(title = list(text = "% of New Visits"), labels = list(format = '{value}%'),
+         showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (new_vol_trending_downtown %>% filter(Campus == x))$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Visits",
+                data = (new_vol_trending_downtown %>% filter(Campus == x))$total_vol,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% New Visits",
+                data = (new_vol_trending_downtown %>% filter(Campus == x))$new_perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % New Visits"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Excludes Radiology and Rad Onc visits <br>", "Based on visits from 2023-01-01"," to ",date_end),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
+
+
+rm(vol_past_month)
+rm(new_vol_trending)
+rm(new_vol_trending_downtown)
+invisible(gc())
+```
+
+### 4. Primary Care Access Trending
+```{r Primary Care Median Wait Time Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+# new_wait_trend <- scheduling_data %>%
+#   filter(Campus != "MSBI") %>%
+#   filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+#   filter(New.PT2 == "New") %>%
+#   # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+#   #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+#   # filter(Appt.Made.Year >= 2022) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time)) %>%
+#   group_by(Appt.Made.MonthYear, Campus) %>%
+#   summarise(waitTime = round(median(Wait.Time, na.rm = TRUE)))
+#
+#
+# # Missing Charges Trending Graph
+# new_wait_trend %>%
+#   hchart('line',
+#          hcaes(x = 'Appt.Made.MonthYear', y = 'waitTime', group = 'Campus')) %>%
+#   hc_chart(plotBorderWidth = 1
+#            # borderColor = "#7f7f7f",
+#            # borderWidth = 1
+#            ) %>%
+#   hc_title(text = "Monthly Trending of Primary Care Time to New Appointment (Median in Days)",
+#            style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+#   hc_colors(site_cols) %>%
+#   hc_plotOptions(series = list(marker = list(symbol = "circle"), lineWidth = 2, fillOpacity = 0.1)) %>%
+#   hc_yAxis(title = list(text = "Days")) %>%
+#            # plotLines = list(list(color = "red", width = 2, value = 80, dashStyle = "dash"))) %>%
+#   hc_xAxis(title = list(enabled = FALSE)) %>%
+#            # type = "datetime",
+#            # dateTimeLabelFormats = list(month = '%Y-%m')) %>%
+#   hc_legend(align = "center", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+#   hc_tooltip(shared = TRUE, borderColor = "black")
+```
+
+
+```{r Primary Care New Percent Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
+# New Patients Scheduled within 14 days --------------------------------------------------------------------
+new_perc_trend <- scheduling_data %>%
+  filter(Campus != "MSBI") %>%
+  filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+  filter(Appt.Made.Year == 2023) %>%
+  filter(Appt.Made.DateYear <= date_end) %>%
+  # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+  filter(New.PT2 == "New") %>%
+  # mutate(Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+  filter(Wait.Time >= 0) %>%
+  mutate(Wait.Time = as.numeric(Wait.Time)) %>%
+  mutate(within.14 = ifelse(Wait.Time <= 14, "Yes","No")) %>%
+  group_by(Campus, Appt.Made.MonthYear, within.14) %>%
+  summarise(count = n()) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  mutate(total = Yes + No,
+         new_14days = round((Yes/(total))*100))
+map(unique(new_perc_trend$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total New Patients"), lineWidth = 3),
+    list(title = list(text = "% of New Patients"), labels = list(format = '{value}%'),
+         showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = new_perc_trend$Appt.Made.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total New Patients Scheduled",
+                data = (new_perc_trend %>% filter(Campus == x))$total,
+                type = 'column',
+                color='#a5a7a5',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% New Patients Scheduled <=14 Days",
+                data = (new_perc_trend %>% filter(Campus == x))$new_14days,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % New Patients Scheduled <=14 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Based on visits from 2023-01-01"," to ",date_end),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+
+invisible(gc())
+```
+
+
+<!-- ### 4. No Show Rate Trending -->
+```{r No Show Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+# no_show_rate_trend <- scheduling_data %>%
+#   filter(Appt.Status %in% c("Arrived","No Show")) %>%
+#    filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   group_by(Campus, Appt.MonthYear, Appt.Status) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = Appt.Status,
+#               values_from = total) %>%
+#   mutate(noShow_rate = round((`No Show`/(Arrived+`No Show`))*100,0))
+#
+#
+# # Missing Charges Trending Graph
+# no_show_rate_trend %>%
+#   hchart('line',
+#          hcaes(x = 'Appt.MonthYear', y = 'noShow_rate', group = 'Campus')) %>%
+#   hc_chart(plotBorderWidth = 0
+#            # borderColor = "#7f7f7f",
+#            # borderWidth = 1
+#            ) %>%
+#   hc_title(text = "Monthly Trending of No Show Rate by Site",
+#            style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+#   hc_colors(site_cols) %>%
+#   hc_plotOptions(series = list(format = "{point.y}%", marker = list(symbol = "circle"), lineWidth = 2, fillOpacity = 0.1)) %>%
+#   hc_yAxis(title = list(text = "% No Show"),
+#            # max = 100,
+#            labels = list(format = '{value}%')) %>%
+#            # plotLines = list(list(color = "red", width = 2, value = 80, dashStyle = "dash"))) %>%
+#   hc_xAxis(title = list(enabled = FALSE)) %>%
+#   hc_legend(align = "center", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+#   hc_tooltip(shared = TRUE, borderColor = "black",valueSuffix = '%')
+```
+
+
+### 5. Hand Hygiene Trending
+```{r Hand Hygiene Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+hh_site <- hh_data_merged %>%
+  mutate(Month = format(as.Date(date, format="%Y-%m-%d"), "%Y-%m")) %>%
+  filter(date >= date_start)
+# test <- hh_site %>%
+#   mutate(Group = ifelse(str_detect(role,"aft"), "After","Before")) %>%
+#   group_by(site, Month) %>%
+#   summarise(Yes = sum(Yes),
+#             No = sum(No),
+#             total_obs = sum(total_obs)) %>%
+#   mutate(yes_perc = round((Yes/total_obs)*100),
+#          no_perc = round((No/total_obs)*100))
+hh_site <- hh_site %>%
+  filter(unit != "NULL") %>%
+  group_by(site, Month) %>%
+  summarise(worker___1 = sum(worker___1),
+            worker___2 = sum(worker___2),
+            worker___3 = sum(worker___3),
+            provider_hands_bef = sum(provider_hands_bef),
+            provider_hands_aft = sum(provider_hands_aft),
+            nurse_hands_bef = sum(nurse_hands_bef),
+            nurse_hands_aft = sum(nurse_hands_aft),
+            mt_hands_bef = sum(mt_hands_bef),
+            mt_hands_aft = sum(mt_hands_aft))
+hh_site <- hh_site %>%
+  group_by(site, Month) %>%
+  mutate(total_obs = sum(worker___1,worker___2,worker___3),
+         total_comp = round((sum(max(provider_hands_bef,provider_hands_aft),
+                          max(nurse_hands_bef, nurse_hands_aft),
+                          max(mt_hands_bef, mt_hands_aft))/total_obs)*100)) %>%
+  dplyr::select(site, Month, total_obs, total_comp)
+network <- data.frame(site = "NETWORK",
+                      Month = "2023-04",
+                      total_obs = 0,
+                      total_comp = 0)
+msw <- data.frame(site = "MSW",
+                      Month = "2023-05",
+                      total_obs = 0,
+                      total_comp = 0)
+msdfp <- data.frame(site = "MSDFP",
+                      Month = "2023-04",
+                      total_obs = 0,
+                      total_comp = 0)
+hh_site <- bind_rows(hh_site, network, msw, msdfp)
+hh_site <- hh_site %>%
+  arrange(site, Month)
+  map(unique(hh_site$site), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Observations"), lineWidth = 3),
+    list(title = list(text = "% Compliance"), labels = list(format = '{value}%'),
+         showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories =(hh_site %>% filter(site == x))$Month,
+           # type = "datetime",
+           # labels = list(format = '{value:%m/%d}')
+           dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Observations Submitted",
+                data = (hh_site %>% filter(site == x))$total_obs,
+                type = 'column',
+                color='#00aeef',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Observations Complied",
+                data = (hh_site %>% filter(site == x))$total_comp,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - Hand Hygiene Compliance %"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  # hc_subtitle(text = paste0("Based on visits from ",date_start," to ",date_end),
+  #             align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+  
+  
+invisible(gc())
+```
+
+
+--------------------------------------------------------------------------------
+```{r Hand Hygiene Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
+hh_downtown <- hh_data_merged %>%
+  mutate(Month = format(as.Date(date, format="%Y-%m-%d"), "%Y-%m")) %>%
+  filter(date >= date_start)
+hh_downtown <- hh_downtown %>%
+  filter(unit != "NULL") %>%
+  filter(site %in% c("MSUS","MSDD","MSBI")) %>%
+  mutate(site = "MS Downtown") %>%
+  group_by(site, Month) %>%
+  summarise(worker___1 = sum(worker___1),
+            worker___2 = sum(worker___2),
+            worker___3 = sum(worker___3),
+            provider_hands_bef = sum(provider_hands_bef),
+            provider_hands_aft = sum(provider_hands_aft),
+            nurse_hands_bef = sum(nurse_hands_bef),
+            nurse_hands_aft = sum(nurse_hands_aft),
+            mt_hands_bef = sum(mt_hands_bef),
+            mt_hands_aft = sum(mt_hands_aft))
+hh_downtown <- hh_downtown %>%
+  group_by(site, Month) %>%
+  mutate(total_obs = sum(worker___1,worker___2,worker___3),
+         total_comp = round((sum(min(provider_hands_bef,provider_hands_aft),
+                          min(nurse_hands_bef, nurse_hands_aft),
+                          min(mt_hands_bef, mt_hands_aft))/total_obs)*100)) %>%
+  dplyr::select(site, Month, total_obs, total_comp)
+map(unique(hh_downtown$site), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Observations"), lineWidth = 3),
+    list(title = list(text = "% Compliance"), labels = list(format = '{value}%'),
+         showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories =(hh_downtown %>% filter(site == x))$Month,
+           # type = "datetime",
+           # labels = list(format = '{value:%m/%d}')
+           dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Observations Submitted",
+                data = (hh_downtown %>% filter(site == x))$total_obs,
+                type = 'column',
+                color='#00aeef',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Observations Complied",
+                data = (hh_downtown %>% filter(site == x))$total_comp,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - Hand Hygiene Compliance %"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  # hc_subtitle(text = paste0("Based on visits from ",date_start," to ",date_end),
+  #             align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+invisible(gc())
+```
+
+
+## MSHS
+### 1. MSHS Open Encounters
+```{r MSHS Unlocked Notes Metrics, echo = FALSE, warning = FALSE, message = FALSE}
+# missing_ytd_data <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Appt.Year == todays_year) %>%
+#   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#   filter(Resource == "Provider") %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO")
+  
+missing_ytd_data <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_ytd_data.rds")) %>%
+  filter(Appt.Year == todays_year) 
+
+# Closed Encounters YTD
+closed_ytd_mshs <- missing_ytd_data %>%
+  filter(enc.status == "CLOSED") %>%
+  group_by(Campus) %>%
+  summarise(clo.count = n())
+closed_3days_mshs <- missing_ytd_data %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=3) %>%
+  group_by(Campus) %>%
+  summarise(clo.3days = n())
+closed_7days_mshs <- missing_ytd_data %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=7) %>%
+  group_by(Campus) %>%
+  summarise(clo.7days = n())
+# Open Encounters YTD
+open_ytd_mshs <- missing_ytd_data %>%
+  filter(enc.status == "OPEN") %>%
+  group_by(Campus) %>%
+  summarise(open.count = n(),
+            enc.open.time = paste0(median(open.days), " days"))
+open_3days_mshs <- missing_ytd_data %>%
+  filter(enc.status == "OPEN") %>%
+  filter(open.days >3) %>%
+  group_by(Campus) %>%
+  summarise(open.3days = n())
+open_7days_mshs <- missing_ytd_data %>%
+  filter(enc.status == "OPEN") %>%
+  filter(open.days >7) %>%
+  group_by(Campus) %>%
+  summarise(open.7days = n())
+# rm(missing_ytd_data)
+missing_chg_ytd_mshs <- Reduce(function(x, y) merge(x, y, all=TRUE), list(closed_ytd_mshs, closed_3days_mshs, closed_7days_mshs, open_ytd_mshs, open_3days_mshs, open_7days_mshs))
+missing_chg_ytd_mshs <- missing_chg_ytd_mshs %>%
+  mutate(total.count = clo.count + open.count,
+         closed.3days.perc = percent(clo.3days/total.count,0),
+         closed.7days.perc = percent(clo.7days/total.count,0),
+         open.3days.perc = percent(open.3days/open.count,0),
+         open.7days.perc = percent(open.7days/open.count,0)) %>%
+  dplyr::select(Campus, total.count, closed.3days.perc, closed.7days.perc, open.count, enc.open.time, open.3days.perc, open.7days.perc)
+col_names <- c("Site", paste0(todays_year," YTD Total Encounters"), "% of Encounters Closed <=3 Days", "% of Encounters Closed <=7 Days",
+               paste0(todays_year, " YTD Open Encounters"), "Median Open Encounter Time",
+               "% of Open Encounters >3 Days", "% of Open Encounters >7 Days")
+header_above <- c("title" = length(missing_chg_ytd_mshs))
+names(header_above) <- paste0("MSHS ",todays_year," YTD Open Encounters")
+header_above_2 <- c("title" = length(missing_chg_ytd_mshs))
+names(header_above_2) <- paste0("Opened Encounters from ",
+                              min(missing_ytd_data$Appt.DateYear)," to ",missing_chg_cutOff)
+missing_chg_ytd_mshs %>%
+  select(everything()) %>%
+    # mutate(open.perc = color_tile("lightpink","red")(open.perc),
+    #      open.3days.perc = color_tile("lightpink","red")(open.3days.perc),
+    #      open.7days.perc = color_tile("lightpink","red")(open.7days.perc)) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = c("r",rep(c("c"),length(missing_chg_ytd_mshs)-1)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total Encounters" = 3,  "Open Encounters" = 4), background = c("white","#221f72","#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "150px") %>%
+  column_spec(5:8, background = "#E6F8FF", width = "150px") %>%
+  column_spec(1, width = "200px") %>%
+  column_spec(c(3:4), color = "#00b800", bold = T) %>%
+  column_spec(c(7:8), color = "#ff3300", bold = T) %>%
+  add_footnote(c("*Includes Epic provider visits only; excludes NURSE, SOCIAL WORK, TREATMENT, LAB, and ECHO visits.")) 
+
+invisible(gc())
+```
+
+
+### 2. MSHS Volume
+```{r MSHS Volume Metrics, echo = FALSE, warning = FALSE, message = FALSE}
+# Prior Week vs. Previous Week -----------------------------------------------------------------------
+# current_last_vol_mshs <- merge(vol_past_month, past_5_wks[,c("Appt.Year","Appt.WeekNum")],)
+current_last_vol_mshs <- vol_past_month %>%
+  filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum)) %>%
+  group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = sum(weekly_vol)) %>%
+  arrange(Visit.Method, Appt.Year, Appt.WeekNum) %>%
+  group_by(Visit.Method) %>%
+  mutate(prev_week = shift(weekly_vol)) %>%
+  mutate(perc_diff = percent((weekly_vol - prev_week)/prev_week,1)) %>%
+  filter(!is.na(prev_week))
+current_last_vol_mshs <- merge(current_last_vol_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_vol_mshs <- current_last_vol_mshs %>%
+  arrange(Appt.WeekNum) %>%
+  select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+
+current_last_vol_mshs_total <- current_last_vol_mshs %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_last_vol_mshs_person <- current_last_vol_mshs %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_last_vol_mshs_tele <- current_last_vol_mshs %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_last_vol_mshs_all <- merge(current_last_vol_mshs_total, current_last_vol_mshs_person, by = "Appt.DateYear")
+current_last_vol_mshs_all <- merge(current_last_vol_mshs_all, current_last_vol_mshs_tele, by = "Appt.DateYear")
+diff_formatter <- formatter("span",
+  style = x ~ style(
+    font.weight = "bold",
+    color = ifelse(x < 0, "#ff3300", ifelse(x > 0, "#00b800", "lightgrey"))),
+  x ~ icontext(ifelse(x >= 0, "arrow-up", "arrow-down"), x))
+current_last_vol_mshs_all$perc_diff.x <- diff_formatter(current_last_vol_mshs_all$perc_diff.x)
+current_last_vol_mshs_all$perc_diff.y <- diff_formatter(current_last_vol_mshs_all$perc_diff.y)
+current_last_vol_mshs_all$perc_diff <- diff_formatter(current_last_vol_mshs_all$perc_diff)
+col_names <- c("Week of", rep(c("Prior Week","Previous Week","% Difference"),3))
+header_above_2 <- c("title" = length(current_last_vol_mshs_all))
+names(header_above_2) <- paste0("Arrived visits from ",
+                              min(past_5_wks$Appt.DateYear)," to ",date_end)
+current_last_vol_mshs_all %>%
+  select(everything()) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = TRUE) %>%
+  add_header_above(c("MSHS Prior vs. Previous Week Volume Difference" = length(current_last_vol_mshs_all)), background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_vol_mshs_all), bold = T)
+
+
+# Prior Week vs. Same Week Last Year ---------------------------------------------------------------
+current_same_vol_mshs <- vol_past_month %>%
+  filter(Appt.Year %in% unique(past_year$Appt.Year)) %>%
+  filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum))
+current_same_vol_mshs <- current_same_vol_mshs %>%
+  group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = sum(weekly_vol)) %>%
+  # filter(Appt.WeekNum > min(Appt.WeekNum)) %>%
+  arrange(Appt.WeekNum, Visit.Method, Appt.Year) %>%
+  group_by(Appt.WeekNum, Visit.Method) %>%
+  mutate(last_year = shift(weekly_vol)) %>%
+  mutate(perc_diff = percent((weekly_vol - last_year)/last_year,1)) %>%
+  filter(!is.na(last_year))
+# current_same_vol_mshs <- current_same_vol_mshs[current_same_vol_mshs$Appt.WeekNum != min(current_same_vol_mshs$Appt.WeekNum),]
+current_same_vol_mshs <- merge(current_same_vol_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")],
+                               by = c("Appt.Year","Appt.WeekNum"),
+                               all.x = TRUE)
+current_same_vol_mshs <- current_same_vol_mshs %>%
+  arrange(Appt.WeekNum) %>%
+  select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+
+current_same_vol_mshs_total <- current_same_vol_mshs %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_same_vol_mshs_person <- current_same_vol_mshs %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_same_vol_mshs_tele <- current_same_vol_mshs %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_same_vol_mshs_all <- merge(current_same_vol_mshs_total, current_same_vol_mshs_person, by = "Appt.DateYear")
+current_same_vol_mshs_all <- merge(current_same_vol_mshs_all, current_same_vol_mshs_tele, by = "Appt.DateYear")
+current_same_vol_mshs_all$perc_diff.x <- diff_formatter(current_same_vol_mshs_all$perc_diff.x)
+current_same_vol_mshs_all$perc_diff.y <- diff_formatter(current_same_vol_mshs_all$perc_diff.y)
+current_same_vol_mshs_all$perc_diff <- diff_formatter(current_same_vol_mshs_all$perc_diff)
+col_names <- c("Week of", rep(c("Prior Week","Same Week Last Year","% Difference"),3))
+header_above_2 <- c("title" = length(current_same_vol_mshs_all))
+names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
+current_same_vol_mshs_all %>%
+  select(everything()) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = TRUE) %>%
+  add_header_above(c("MSHS Prior vs. Same Week Last Year Volume Difference" = length(current_same_vol_mshs_all)),
+                    background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_same_vol_mshs_all), bold = T)
+
+invisible(gc())
+```
+
+
+### 3. MSHS Time to Appointment
+```{r MSHS Time to Appointment Metrics by Site, echo = FALSE, warning = FALSE, message = FALSE}
+# time_to_appt_all <- scheduling_data %>%
+#   filter(Campus != "MSBI") %>%
+#   filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+#   # filter(New.PT2 == "New") %>%
+#   # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+#   #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+#   # filter(Appt.Made.Year >= 2022) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time))
+
+time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
+
+# Time to Appointment by Visit Method and Patient Type ---------------------------------------------
+current_last_wait_mshs_all_all <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = round(median(Wait.Time, na.rm = TRUE),0)) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_mshs_all_ptType <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+  arrange(Appt.Made.WeekNum) %>%
+  pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_mshs_all <- merge(current_last_wait_mshs_all_all, current_last_wait_mshs_all_ptType)
+current_last_wait_mshs_all <- current_last_wait_mshs_all %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_mshs_all$Visit.Method <- "Total"
+current_last_wait_mshs_inPerson_all <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = median(Wait.Time)) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_mshs_inPerson_ptType <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+  arrange(Appt.Made.WeekNum) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_mshs_inPerson <- merge(current_last_wait_mshs_inPerson_all, current_last_wait_mshs_inPerson_ptType)
+current_last_wait_mshs_inPerson <- current_last_wait_mshs_inPerson %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_mshs_inPerson$Visit.Method <- "IN PERSON"
+current_last_wait_mshs_tele_all <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = median(Wait.Time)) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_mshs_tele_ptType <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+  arrange(Appt.Made.WeekNum) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_mshs_tele <- merge(current_last_wait_mshs_tele_all, current_last_wait_mshs_tele_ptType)
+current_last_wait_mshs_tele <- current_last_wait_mshs_tele %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_mshs_tele$Visit.Method <- "TELEHEALTH"
+current_last_wait_mshs_combined <- bind_rows(current_last_wait_mshs_all, current_last_wait_mshs_inPerson, current_last_wait_mshs_tele)
+current_last_wait_mshs_combined <- current_last_wait_mshs_combined%>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+current_last_wait_mshs_combined <- merge(current_last_wait_mshs_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_wait_mshs_combined <- current_last_wait_mshs_combined %>%
+  select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
+  arrange(Appt.DateYear, New.PT2) %>%
+  arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
+current_last_wait_mshs_combined <- current_last_wait_mshs_combined %>%
+  pivot_wider(
+    names_from = Visit.Method:New.PT2,
+    values_from = days
+  )
+# wait_formatter <- formatter("span",
+#   style = x ~ style(
+#     font.weight = "bold",
+#     color = ifelse(x > 14, "#ff3300", ifelse(x <= 14, "#00b800", "black"))),
+#   x ~ icontext(ifelse(x <= 14, "thumbs-up", "thumbs-down"), x))
+#Format color_bar text to full length
+# color_bar <- function (color = "#49CA69", fun = "proportion", ...)
+# {
+#   fun <- match.fun(fun)
+#   formatter("span",
+#             style = function(x) style(display = "inline-block",
+#                                       `border-radius` = "0px", `padding-right` = "0px",
+#                                       `background-color` = csscolor(color),
+#                                       width = fun(as.numeric(x)/5, ...)))
+# }
+my_color_bar <- function (color = "lightgray", fixedWidth=100,...)
+{
+        formatter("span", style = function(x) style(display = "inline-block",
+                                                `border-radius` = "0px", `padding-right` = "0px",
+                                                `background-color` = csscolor(color),
+                                                width = paste(fixedWidth*(x/20),"px",sep=""),
+                                                ...))
+}
+# unit.scale = function(x) x/max(x)
+#
+wait_formatter <- function(x){
+  if(x<=14){my_color_bar("#00b800")(x)
+    }else if(x>=30){my_color_bar("#ff3300")(x)
+    }else{my_color_bar("orange")(x)}
+}
+# wait_formatter <- formatter("span",
+#                             style = x ~ style(display = "block", font.weight = "bold",color = "black","border-radius" = "4px",
+#                                               "padding-right" = "4px",
+#                                               "background-color" = ifelse(x <= 14, "#00b800", ifelse(x >= 30, "#ff3300", "orange"))))
+current_last_wait_mshs_combined <- current_last_wait_mshs_combined %>% mutate_if(is.numeric, wait_formatter)
+col_names <- c("Week of", rep(c("All","Established","New"),3))
+header_above_2 <- c("title" = length(current_last_wait_mshs_combined))
+names(header_above_2) <- paste0("Scheduled visits from ", date_start, " to ", date_end)
+current_last_wait_mshs_combined %>%
+  select(everything()) %>%
+  mutate_if(is.numeric, round, digits = 0) %>%
+  kable(escape = F, align = c("c",rep("l",9)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
+                row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(c("MSHS Primary Care Time to Appointment (Median in Days)" = length(current_last_wait_mshs_combined)),
+                   background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px", color = "black", bold = T) %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px", color = "black", bold = T) %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px", color = "black", bold = T) %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_wait_mshs_combined), bold = T) %>%
+  footnote(general_title = "",
+           general = "Status: <span style='color: green;'>Green:</span> <=14 days,
+           <span style='color: orange;'>Orange:</span> >14 & <30 days,
+           <span style='color: red;'>Red:</span> >=30 days",
+           escape = FALSE)
+# New Patients Scheduled within 14 days --------------------------------------------------------------------
+current_last_new_mshs <- time_to_appt_all %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  mutate(within.14 = ifelse(Wait.Time <= 14, "Yes","No")) %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, Visit.Method, New.PT2, within.14) %>%
+  summarise(count = n()) %>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+current_last_new_mshs <- merge(current_last_new_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_new_mshs_total <- current_last_new_mshs %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_mshs_person <- current_last_new_mshs %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_mshs_tele <- current_last_new_mshs %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_mshs_all <- merge(current_last_new_mshs_total, current_last_new_mshs_person, by = "Appt.DateYear")
+current_last_new_mshs_all <- merge(current_last_new_mshs_all, current_last_new_mshs_tele, by = "Appt.DateYear")
+col_names <- c("Week of", rep(c("New Patient Ratio","Total New Patients Scheduled","New Patients Scheduled <= 14 days"),3))
+header_above_2 <- c("title" = length(current_last_new_mshs_all))
+names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.Made.DateYear), " to ",
+                                                            # strftime(max(time_to_appt_all$Appt.Made.DateYear), format = "%A"), ", ",
+                                max(time_to_appt_all$Appt.Made.DateYear))
+current_last_new_mshs_all %>%
+  select(everything()) %>%
+  # mutate_if(is.numeric, round, digits = 0) %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
+                row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(c("MSHS Primary Care New Patients Scheduled <= 14 Days" = length(current_last_new_mshs_all)),
+                   background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px", color = "black") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px", color = "black") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px", color = "black") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_new_mshs_all), bold = T) %>%
+  column_spec(c(4,7,10), color = "#00b800", bold = T)
+  # footnote(general_title = "",
+  #          general = "Status: <span style='color: green;'>Green:</span> <=14 days,
+  #          <span style='color: orange;'>Orange:</span> >14 & <30 days,
+  #          <span style='color: red;'>Red:</span> >=30 days",
+  #          escape = FALSE)
+
+invisible(gc())
+```
+
+
+### 4. MSHS Operational Metrics - No Shows
+```{r MSHS Operational Metrics, echo = FALSE, warning = FALSE, message = FALSE}
+# no_show_rate <- scheduling_data %>%
+#   filter(Appt.Year %in% unique(past_4_wks$Appt.Year)) %>%
+#   filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+#   filter(Appt.Status %in% c("Arrived","No Show")) %>%
+#   arrange(Appt.Year, Appt.WeekNum) %>%
+#   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method, Appt.Status) %>%
+#   summarise(weekly_vol = n()) %>%
+#   mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
+# # No Shows ----------------------------------------------------------------------------------------
+# current_last_noShow_mshs <- no_show_rate %>%
+#   # filter(Appt.Year == todays_year) %>%
+#   # filter(Appt.WeekNum %in% past_4_wks) %>%
+#   group_by(Appt.Year, Appt.WeekNum, Visit.Method, Appt.Status) %>%
+#   summarise(total = sum(weekly_vol)) %>%
+#   pivot_wider(
+#     names_from = Visit.Method,
+#     values_from = total
+#   ) %>%
+#   mutate(Total = `IN PERSON` + TELEHEALTH) %>%
+#   pivot_longer(
+#     4:6,
+#     names_to = "Visit.Method",
+#     values_to = "total"
+#   ) %>%
+#   pivot_wider(
+#     names_from = Appt.Status,
+#     values_from = total
+#   ) %>%
+#   mutate(
+#     noShow_rate = percent((`No Show`/(Arrived+`No Show`)),0))
+#
+# current_last_noShow_mshs <- merge(current_last_noShow_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+#
+# current_last_noShow_mshs <- current_last_noShow_mshs %>%
+#   arrange(Appt.WeekNum) %>%
+#   select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
+#
+#
+# current_last_noShow_mshs_total <- current_last_noShow_mshs %>%
+#   filter(Visit.Method == "Total") %>%
+#   select(-Visit.Method)
+#
+# current_last_noShow_mshs_person <- current_last_noShow_mshs %>%
+#   filter(Visit.Method == "IN PERSON") %>%
+#   select(-Visit.Method)
+#
+# current_last_noShow_mshs_tele <- current_last_noShow_mshs %>%
+#   filter(Visit.Method == "TELEHEALTH") %>%
+#   select(-Visit.Method)
+#
+# current_last_noShow_mshs_all <- merge(current_last_noShow_mshs_total, current_last_noShow_mshs_person, by = "Appt.DateYear")
+# current_last_noShow_mshs_all <- merge(current_last_noShow_mshs_all, current_last_noShow_mshs_tele, by = "Appt.DateYear")
+#
+#
+# col_names <- c("Week of", rep(c("Arrived Volume","No Show Volume","No Show Rate"),3))
+#
+# header_above_2 <- c("title" = length(current_last_noShow_mshs_all))
+# names(header_above_2) <- paste0("Arrived visits from ",
+#                               min(past_4_wks$Appt.DateYear)," to ",max(scheduling_data$Appt.DateYear))
+#
+# current_last_noShow_mshs_all %>%
+#   select(everything()) %>%
+#   mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
+#          noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
+#          noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
+#   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+#   # mutate_if(str_detect("%"), function(x) {
+#   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+#   kable(escape = F, align = "c",
+#         col.names = col_names) %>%
+#   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+#   add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+#   add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+#   add_header_above(c("MSHS No Show Volume and Rate" = length(current_last_noShow_mshs_all)), background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+#   column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+#   column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+#   column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+#   column_spec(1, width = "150px") %>%
+#   row_spec(nrow(current_last_noShow_mshs_all), bold = T) %>%
+#   footnote(general_title = "",
+#            general = "No Show Rate = No Show Patients / No Show and Arrived Patients",
+#            escape = FALSE) %>%
+#     column_spec(c(4,7,10), color = "white", bold = T)
+
+invisible(gc())
+```
+
+
+### 5. MSHS Hand Hygiene
+```{r MSHS Hand Hygiene, echo = FALSE, warning = FALSE, message = FALSE}
+# Hand Hygience Compliance
+hh_mshs <- merge(hh_data_merged_role, past_4_wks[,c("Appt.Year","Appt.WeekNum")],)
+hh_sites <- unique(hh_mshs$site)
+hh_mshs_role <- hh_mshs %>%
+  group_by(Appt.Year, Appt.WeekNum, role) %>%
+  summarise(Yes = sum(Yes),
+            No = sum(No),
+            total_obs = sum(total_obs))
+hh_mshs_all <- hh_mshs %>%
+  mutate(role = ifelse(grepl("bef", role, fixed = T),"a-bef","b-aft")) %>%
+  group_by(Appt.Year, Appt.WeekNum, role) %>%
+  summarise(Yes = sum(Yes),
+            No = sum(No),
+            total_obs = sum(total_obs))
+hh_mshs <- bind_rows(hh_mshs_role, hh_mshs_all)
+hh_mshs <- merge(hh_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+hh_mshs <- hh_mshs %>%
+  mutate(perc_comp = percent(Yes/total_obs,0)) %>%
+  select(Appt.DateYear, role, perc_comp, total_obs)
+hh_mshs <- hh_mshs %>%
+  pivot_wider(names_from = role,
+              values_from = c("total_obs","perc_comp")) %>%
+  dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
+                total_obs_provider_hands_bef, perc_comp_provider_hands_bef, total_obs_provider_hands_aft, perc_comp_provider_hands_aft,
+                total_obs_nurse_hands_bef, perc_comp_nurse_hands_bef, total_obs_nurse_hands_aft, perc_comp_nurse_hands_aft,
+                total_obs_mt_hands_bef, perc_comp_mt_hands_bef, total_obs_mt_hands_aft, perc_comp_mt_hands_aft)
+hh_mshs_final <- hh_mshs
+comp_formatter <- formatter("span",
+  style = x ~ style(color = ifelse(x >= 0.9, "#00b800", "#ff3300")))
+hh_mshs_final <- hh_mshs_final %>% mutate_if(is.formattable, comp_formatter)
+col_names <- c("Week of", rep(c("Obs # Before","Comp % Before", "Obs # After", "Comp % After"),4))
+header_above_2 <- c("title" = length(hh_mshs_final))
+names(header_above_2) <- paste0("Data Entered from ",
+                              min(past_4_wks$Appt.DateYear)," to ",max(hh_data_merged_role$date, na.rm = T))
+hh_mshs_final %>%
+  select(everything()) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "All" = 4,  "Provider" = 4, "Nurse" = 4, "Med Asst/Other" = 4),
+                   background = c("white","#221f72","#7f7f7f" ,"#00aeef","#d80b8c"), color = "white", font_size = 14) %>%
+  # add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = TRUE) %>%
+  add_header_above(c("MSHS Ambulatory Hand Hygiene Compliance" = length(hh_mshs_final)), background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+  column_spec(2:5, background = "#EBEBF9", width = "70px") %>%
+  column_spec(6:9, background = "#F0F0F0", width = "70px") %>%
+  column_spec(10:13, background = "#E6F8FF", width = "70px") %>%
+  column_spec(14:17, background = "#feecf7", width = "70px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(hh_mshs_final), bold = T) %>%
+   footnote(general_title = "",
+           general = "Target: 90%",
+           escape = FALSE)
+invisible(gc())
+```
+<br/>
+
+
+```{r Site Epic Open Encounters, echo = FALSE, warning = FALSE, message = FALSE}
+# Epic unlocked notes YTD
+open_encounters_site <- function(site){
+
+  # site <- "MSUS"
+
+# Closed Encounters YTD
+closed_ytd_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  group_by(Campus) %>%
+  summarise(clo.count = n())
+closed_3days_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=3) %>%
+  group_by(Campus) %>%
+  summarise(clo.3days = n())
+closed_7days_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=7) %>%
+  group_by(Campus) %>%
+  summarise(clo.7days = n())
+# Open Encounters YTD
+open_ytd_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "OPEN") %>%
+  group_by(Campus) %>%
+  summarise(open.count = n(),
+            enc.open.time = paste0(median(open.days), " days"))
+open_3days_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "OPEN") %>%
+  filter(open.days >3) %>%
+  group_by(Campus) %>%
+  summarise(open.3days = n())
+open_7days_site <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "OPEN") %>%
+  filter(open.days >7) %>%
+  group_by(Campus) %>%
+  summarise(open.7days = n())
+# rm(missing_ytd_data)
+missing_chg_ytd_site <- Reduce(function(x, y) merge(x, y, all=TRUE), list(closed_ytd_site, closed_3days_site, closed_7days_site, open_ytd_site, open_3days_site, open_7days_site))
+missing_chg_ytd_site[is.na(missing_chg_ytd_site)] <- 0
+missing_chg_ytd_site <- missing_chg_ytd_site %>%
+  mutate(total.count = clo.count + open.count,
+         closed.3days.perc = percent(clo.3days/total.count,0),
+         closed.7days.perc = percent(clo.7days/total.count,0),
+         open.3days.perc = percent(open.3days/open.count,0),
+         open.7days.perc = percent(open.7days/open.count,0)) %>%
+  dplyr::select(Campus, total.count, closed.3days.perc, closed.7days.perc, open.count, enc.open.time, open.3days.perc, open.7days.perc)
+col_names <- c("Site",paste0(todays_year," YTD Total Encounters"), "% of Encounters Closed <=3 Days", "% of Encounters Closed <=7 Days",
+               paste0(todays_year, " YTD Open Encounters"), "Median Open Encounter Time",
+               "% of Open Encounters >3 Days", "% of Open Encounters >7 Days")
+header_above <- c("title" = length(missing_chg_ytd_site))
+names(header_above) <- paste0(site," ",todays_year," YTD Open Encounters")
+header_above_2 <- c("title" = length(missing_chg_ytd_site))
+names(header_above_2) <- paste0("Opened Encounters from ",
+                              min(missing_ytd_data$Appt.DateYear)," to ",missing_chg_cutOff)
+missing_chg_ytd_site %>%
+  select(everything()) %>%
+    # mutate(open.perc = color_tile("lightpink","red")(open.perc),
+    #      open.3days.perc = color_tile("lightpink","red")(open.3days.perc),
+    #      open.7days.perc = color_tile("lightpink","red")(open.7days.perc)) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = c("r",rep(c("c"),length(missing_chg_ytd_site)-1)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total Encounters" = 3,  "Open Encounters" = 4), background = c("white","#221f72","#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "150px") %>%
+  column_spec(5:8, background = "#E6F8FF", width = "150px") %>%
+  column_spec(1, width = "200px") %>%
+  column_spec(c(3:4), color = "#00b800", bold = T) %>%
+  column_spec(c(7:8), color = "red", bold = T) %>%
+  add_footnote(c("*Includes Epic provider visits only; excludes NURSE, SOCIAL WORK, TREATMENT, LAB, and ECHO visits.")) 
+
+}
+```
+
+
+```{r Department Epic Open Encounters, echo = FALSE, warning = FALSE, message = FALSE}
+# Epic unlocked notes YTD
+open_encounters_dept <- function(site){
+
+  # site <- "MSM"
+# Closed Encounters YTD
+closed_ytd_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(clo.count = n())
+closed_3days_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=3) %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(clo.3days = n())
+closed_7days_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(enc.status == "CLOSED") %>%
+  filter(open.days <=7) %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(clo.7days = n())
+# Closed Encounters YTD
+open_ytd_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(ENC_CLOSED_CHARGE_STATUS == "OPEN") %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(open.count = n(),
+            enc.open.time = paste0(median(open.days)," days"))
+open_3days_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(ENC_CLOSED_CHARGE_STATUS == "OPEN") %>%
+  filter(open.days >3) %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(open.3days = n())
+open_7days_dept <- missing_ytd_data %>%
+  filter(Campus == site) %>%
+  filter(ENC_CLOSED_CHARGE_STATUS == "OPEN") %>%
+  filter(open.days >7) %>%
+  group_by(Campus.Specialty, Department) %>%
+  summarise(open.7days = n())
+missing_chg_ytd_dept <- Reduce(function(x, y) merge(x, y, all=TRUE), list(closed_ytd_dept, closed_3days_dept, closed_7days_dept, open_ytd_dept, open_3days_dept, open_7days_dept))
+missing_chg_ytd_dept[is.na(missing_chg_ytd_dept)] <- 0
+missing_chg_ytd_dept <- missing_chg_ytd_dept %>%
+  mutate(total.count = clo.count + open.count,
+         closed.3days.perc = percent(clo.3days/total.count,0),
+         closed.7days.perc = percent(clo.7days/total.count,0),
+         open.3days.perc = percent(open.3days/open.count,0),
+         open.7days.perc = percent(open.7days/open.count,0)) %>%
+  dplyr::select(Campus.Specialty, Department, total.count, closed.3days.perc, closed.7days.perc, open.count, enc.open.time, open.3days.perc, open.7days.perc) %>%
+   mutate_all(., ~replace(., is.na(.), 0))
+col_names <- c("Department",paste0(todays_year," YTD Total Encounters"), "% of Encounters Closed <=3 Days", "% of Encounters Closed <=7 Days",
+               paste0(todays_year, " YTD Open Encounters"), "Median Open Encounter Time",
+               "% of Open Encounters >3 Days", "% of Open Encounters >7 Days")
+header_above <- c("title" = length(missing_chg_ytd_dept)-1)
+names(header_above) <- paste0(site," ",todays_year," YTD Open Encounters")
+header_above_2 <- c("title" = length(missing_chg_ytd_dept)-1)
+names(header_above_2) <- paste0("Opened Encounters from ",
+                              min(missing_ytd_data$Appt.DateYear)," to ",missing_chg_cutOff)
+missing_chg_ytd_dept %>%
+  dplyr::select(-Campus.Specialty) %>%
+      # mutate(open.perc = color_tile("lightpink","red")(open.perc),
+      #    open.3days.perc = color_tile("lightpink","red")(open.3days.perc),
+      #    open.7days.perc = color_tile("lightpink","red")(open.7days.perc)) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = c("r","r",rep("c",7)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+   add_header_above(c(" " = 1, "Total Encounters" = 3,  "Open Encounters" = 4), background = c("white","#221f72","#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "150px") %>%
+  column_spec(5:8, background = "#E6F8FF", width = "150px") %>%
+  column_spec(1, width = "400px") %>%
+  column_spec(c(3:4), color = "#00b800", bold = T) %>%
+  column_spec(c(7:8), color = "red", bold = T) %>%
+  pack_rows(index = table(missing_chg_ytd_dept$Campus.Specialty), label_row_css = "background-color: #dddedd; color: black;") %>%
+  add_footnote(c("*Includes Epic provider visits only; excludes NURSE, SOCIAL WORK, TREATMENT, LAB, and ECHO visits.")) 
+}
+```
+
+
+```{r Site Volume Metrics Functions, echo = FALSE, warning = FALSE, message = FALSE}
+# Prior Week vs. Previous Week by Site Function
+current_last_vol_site <- function(site){
+  # site <- "MSUS"
+
+  # current_last_vol_site <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
+  current_last_vol_site <-  vol_past_month %>%
+  filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum)) %>%
+    filter(Campus == site) %>%
+    group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
+    # filter(Appt.Year == todays_year) %>%
+    summarise(weekly_vol = sum(weekly_vol)) %>%
+    arrange(Visit.Method, Appt.Year, Appt.WeekNum) %>%
+    group_by(Visit.Method) %>%
+    mutate(prev_week = shift(weekly_vol)) %>%
+    mutate(perc_diff = percent((weekly_vol - prev_week)/prev_week,0)) %>%
+    filter(!is.na(prev_week))
+current_last_vol_site <- merge(current_last_vol_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_vol_site <- current_last_vol_site %>%
+  arrange(Appt.WeekNum) %>%
+  select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+
+current_last_vol_site_total <- current_last_vol_site %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_last_vol_site_person <- current_last_vol_site %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_last_vol_site_tele <- current_last_vol_site %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_last_vol_site_all <- merge(current_last_vol_site_total, current_last_vol_site_person, by = "Appt.DateYear")
+current_last_vol_site_all <- merge(current_last_vol_site_all, current_last_vol_site_tele, by = "Appt.DateYear")
+diff_formatter <- formatter("span",
+  style = x ~ style(
+    font.weight = "bold",
+    color = ifelse(x < 0, "#ff3300", ifelse(x > 0, "#00b800", "black"))),
+  x ~ icontext(ifelse(x > 0, "arrow-up", "arrow-down"), x))
+current_last_vol_site_all$perc_diff.x <- diff_formatter(current_last_vol_site_all$perc_diff.x)
+current_last_vol_site_all$perc_diff.y <- diff_formatter(current_last_vol_site_all$perc_diff.y)
+current_last_vol_site_all$perc_diff <- diff_formatter(current_last_vol_site_all$perc_diff)
+col_names <- c("Week of", rep(c("Prior Week","Previous Week","% Difference"),3))
+header_above <- c("title" = length(current_last_vol_site_all))
+names(header_above) <- paste0(site, " Prior vs. Previous Week Volume Difference")
+header_above_2 <- c("title" = length(current_last_vol_site_all))
+names(header_above_2) <- paste0("Arrived visits from ",
+                              min(past_5_wks$Appt.DateYear)," to ",date_end)
+current_last_vol_site_all %>%
+  select(everything()) %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_vol_site_all), bold = T)
+}
+# Prior Week vs. Same Week Last Year by Site Function
+current_same_vol_site <- function(site){
+  # site <- "MSM"
+
+current_same_vol_site <- vol_past_month %>%
+    filter(Campus == site) %>%
+    filter(Appt.Year %in% unique(past_year$Appt.Year)) %>%
+    filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum))
+current_same_vol_site <- current_same_vol_site %>%
+  filter(Campus == site) %>%
+  group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = sum(weekly_vol)) %>%
+  # filter(Appt.WeekNum > min(Appt.WeekNum)) %>%
+  arrange(Appt.WeekNum, Visit.Method, Appt.Year) %>%
+  group_by(Appt.WeekNum, Visit.Method) %>%
+  mutate(last_year = shift(weekly_vol)) %>%
+  mutate(perc_diff = percent((weekly_vol - last_year)/last_year,0)) %>%
+  filter(!is.na(last_year))
+# current_same_vol_site <- current_same_vol_site[current_same_vol_site$Appt.WeekNum != min(current_same_vol_site$Appt.WeekNum),]
+current_same_vol_site <- merge(current_same_vol_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_same_vol_site <- current_same_vol_site %>%
+  arrange(Appt.WeekNum) %>%
+  select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+
+current_same_vol_site_total <- current_same_vol_site %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_same_vol_site_person <- current_same_vol_site %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_same_vol_site_tele <- current_same_vol_site %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_same_vol_site_all <- merge(current_same_vol_site_total, current_same_vol_site_person, by = "Appt.DateYear")
+current_same_vol_site_all <- merge(current_same_vol_site_all, current_same_vol_site_tele, by = "Appt.DateYear")
+diff_formatter <- formatter("span",
+  style = x ~ style(
+    font.weight = "bold",
+    color = ifelse(x < 0, "#ff3300", ifelse(x > 0, "#00b800", "black"))),
+  x ~ icontext(ifelse(x > 0, "arrow-up", "arrow-down"), x))
+current_same_vol_site_all$perc_diff.x <- diff_formatter(current_same_vol_site_all$perc_diff.x)
+current_same_vol_site_all$perc_diff.y <- diff_formatter(current_same_vol_site_all$perc_diff.y)
+current_same_vol_site_all$perc_diff <- diff_formatter(current_same_vol_site_all$perc_diff)
+col_names <- c("Week of", rep(c("Prior Week","Same Week Last Year","% Difference"),3))
+header_above <- c("title" = length(current_same_vol_site_all))
+names(header_above) <- paste0(site, " Prior Week vs. Same Week Last Year Volume Difference")
+header_above_2 <- c("title" = length(current_same_vol_site_all))
+names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
+current_same_vol_site_all %>%
+  select(everything()) %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_same_vol_site_all), bold = T)
+}
+```
+
+
+```{r Department Volume Metrics Functions, echo = FALSE, warning = FALSE, message = FALSE}
+# Prior Week vs. Previous Week by Site Function
+current_last_vol_dept <- function(site){
+  # site <- "MSUS"
+
+  current_last_vol_dept <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
+  current_last_vol_dept <- current_last_vol_dept %>%
+    filter(Campus == site) %>%
+    group_by(Campus.Specialty, Appt.Year, Appt.WeekNum, Visit.Method) %>%
+    # filter(Appt.Year == todays_year) %>%
+    summarise(weekly_vol = sum(weekly_vol)) %>%
+    arrange(Visit.Method, Appt.Year, Appt.WeekNum) %>%
+    group_by(Campus.Specialty, Visit.Method) %>%
+    mutate(prev_week = shift(weekly_vol)) %>%
+    mutate(perc_diff = percent((weekly_vol - prev_week)/prev_week,0)) %>%
+    filter(!is.na(prev_week))
+current_last_vol_dept <- merge(current_last_vol_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_vol_dept <- current_last_vol_dept %>%
+  arrange(Appt.WeekNum) %>%
+  select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+
+current_last_vol_dept_total <- current_last_vol_dept %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_last_vol_dept_person <- current_last_vol_dept %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_last_vol_dept_tele <- current_last_vol_dept %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_last_vol_dept_all <- merge(current_last_vol_dept_total, current_last_vol_dept_person, by = c("Campus.Specialty","Appt.DateYear"))
+current_last_vol_dept_all <- merge(current_last_vol_dept_all, current_last_vol_dept_tele, by = c("Campus.Specialty","Appt.DateYear"))
+current_last_vol_dept_all[is.na(current_last_vol_dept_all)] <- 0
+diff_formatter <- formatter("span",
+  style = x ~ style(
+    font.weight = "bold",
+    color = ifelse(x < 0, "#ff3300", ifelse(x > 0, "#00b800", "black"))),
+  x ~ icontext(ifelse(x > 0, "arrow-up", "arrow-down"), x))
+current_last_vol_dept_all$perc_diff.x <- diff_formatter(current_last_vol_dept_all$perc_diff.x)
+current_last_vol_dept_all$perc_diff.y <- diff_formatter(current_last_vol_dept_all$perc_diff.y)
+current_last_vol_dept_all$perc_diff <- diff_formatter(current_last_vol_dept_all$perc_diff)
+col_names <- c("Specialty", "Week of", rep(c("Prior Week","Previous Week","% Difference"),3))
+header_above <- c("title" = length(current_last_vol_dept_all))
+names(header_above) <- paste0(site, " Prior vs. Previous Week Volume Difference")
+header_above_2 <- c("title" = length(current_last_vol_dept_all))
+names(header_above_2) <- paste0("Arrived visits from ",
+                              min(past_5_wks$Appt.DateYear)," to ",date_end)
+current_last_vol_dept_all %>%
+  select(everything()) %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = c("c","l",rep("c",9)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" " = 2, "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(3:5, background = "#EBEBF9", width = "100px") %>%
+  column_spec(6:8, background = "#F0F0F0", width = "100px") %>%
+  column_spec(9:11, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+    column_spec(1, width = "150px") %>%
+  collapse_rows(1)
+}
+# Prior Week vs. Same Week Last Year by dept Function
+current_same_vol_dept <- function(site){
+  # site <- "MSUS"
+
+  # Prior Week vs. Same Week 2022
+  current_same_vol_dept <- vol_past_month %>%
+    filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum))
+current_same_vol_dept <- current_same_vol_dept %>%
+  filter(Campus == site) %>%
+  group_by(Campus.Specialty, Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = sum(weekly_vol)) %>%
+  # filter(Appt.WeekNum > min(Appt.WeekNum)) %>%
+  arrange(Appt.WeekNum, Visit.Method, Appt.Year) %>%
+  group_by(Campus.Specialty, Appt.WeekNum, Visit.Method) %>%
+  mutate(last_year = shift(weekly_vol)) %>%
+  mutate(perc_diff = percent((weekly_vol - last_year)/last_year,0)) %>%
+  filter(!is.na(last_year))
+# current_same_vol_dept <- current_same_vol_dept[current_same_vol_dept$Appt.WeekNum != min(current_same_vol_dept$Appt.WeekNum),]
+current_same_vol_dept <- merge(current_same_vol_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_same_vol_dept <- current_same_vol_dept %>%
+  arrange(Appt.WeekNum) %>%
+  select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+
+current_same_vol_dept_total <- current_same_vol_dept %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_same_vol_dept_person <- current_same_vol_dept %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_same_vol_dept_tele <- current_same_vol_dept %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_same_vol_dept_all <- merge(current_same_vol_dept_total, current_same_vol_dept_person, by = c("Campus.Specialty","Appt.DateYear"))
+current_same_vol_dept_all <- merge(current_same_vol_dept_all, current_same_vol_dept_tele, by = c("Campus.Specialty","Appt.DateYear"))
+current_same_vol_dept_all[is.na(current_same_vol_dept_all)] <- 0
+diff_formatter <- formatter("span",
+  style = x ~ style(
+    font.weight = "bold",
+    color = ifelse(x < 0, "#ff3300", ifelse(x > 0, "#00b800", "lightgrey"))),
+  x ~ icontext(ifelse(x >= 0, "arrow-up", "arrow-down"), x))
+current_same_vol_dept_all$perc_diff.x <- diff_formatter(current_same_vol_dept_all$perc_diff.x)
+current_same_vol_dept_all$perc_diff.y <- diff_formatter(current_same_vol_dept_all$perc_diff.y)
+current_same_vol_dept_all$perc_diff <- diff_formatter(current_same_vol_dept_all$perc_diff)
+col_names <- c("Specialty","Week of", rep(c("Prior Week","Same Week Last Year","% Difference"),3))
+header_above <- c("title" = length(current_same_vol_dept_all))
+names(header_above) <- paste0(site, " Prior Week vs. Same Week Last Year Volume Difference")
+header_above_2 <- c("title" = length(current_same_vol_dept_all))
+names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
+current_same_vol_dept_all %>%
+  select(everything()) %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" " = 2, "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  collapse_rows(1)
+}
+```
+
+
+```{r Site Primary Care Access Function, echo = FALSE, warning = FALSE, message = FALSE}
+current_last_wait_site <- function(site){
+  
+  # site <- "MSUS"
+# Time to Appointment by Visit Method and Patient Type ---------------------------------------------
+# site <- "MSQ"
+# time_to_appt_all_site <- time_to_appt_all %>% filter(Campus == site)
+  current_last_wait_site_all_all <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year == unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+    group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = round(median(Wait.Time, na.rm = TRUE),0)) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_site_all_ptType <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+    group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+    summarise(days = median(round(Wait.Time))) %>%
+    arrange(Appt.Made.WeekNum) %>%
+    pivot_wider(
+      names_from = New.PT2,
+      values_from = days
+    )
+cols <- c("Appt.Made.Year","Appt.Made.WeekNum","Established","New")
+missing <- setdiff(cols, names(current_last_wait_site_all_ptType))
+current_last_wait_site_all_ptType[missing] <- NA
+current_last_wait_site_all_ptType <- current_last_wait_site_all_ptType[cols]
+current_last_wait_site_all <- merge(current_last_wait_site_all_all, current_last_wait_site_all_ptType)
+current_last_wait_site_all <- current_last_wait_site_all %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_site_all$Visit.Method <- "Total"
+current_last_wait_site_all <- current_last_wait_site_all %>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+
+current_last_wait_site_inPerson_all <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = median(round(Wait.Time))) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_site_inPerson_ptType <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+  summarise(days = median(round(Wait.Time))) %>%
+  arrange(Appt.Made.WeekNum) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+cols <- c("Appt.Made.Year","Appt.Made.WeekNum","Established","New")
+missing <- setdiff(cols, names(current_last_wait_site_inPerson_ptType))
+current_last_wait_site_inPerson_ptType[missing] <- NA
+current_last_wait_site_inPerson_ptType <- current_last_wait_site_inPerson_ptType[cols]
+current_last_wait_site_inPerson <- merge(current_last_wait_site_inPerson_all, current_last_wait_site_inPerson_ptType)
+current_last_wait_site_inPerson <- current_last_wait_site_inPerson %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_site_inPerson$Visit.Method <- "IN PERSON"
+current_last_wait_site_inPerson <- current_last_wait_site_inPerson %>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+
+current_last_wait_site_tele_all <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum) %>%
+  summarise(All = median(round(Wait.Time))) %>%
+  arrange(Appt.Made.WeekNum)
+current_last_wait_site_tele_ptType <- time_to_appt_all %>%
+    filter(Campus == site) %>%
+    filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+    filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, New.PT2) %>%
+  summarise(days = median(round(Wait.Time))) %>%
+  arrange(Appt.Made.WeekNum) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+cols <- c("Appt.Made.Year","Appt.Made.WeekNum","Established","New")
+missing <- setdiff(cols, names(current_last_wait_site_tele_ptType))
+current_last_wait_site_tele_ptType[missing] <- NA
+current_last_wait_site_tele_ptType <- current_last_wait_site_tele_ptType[cols]
+current_last_wait_site_tele <- merge(current_last_wait_site_tele_all, current_last_wait_site_tele_ptType)
+current_last_wait_site_tele <- current_last_wait_site_tele %>%
+  pivot_longer(
+    3:5,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_site_tele$Visit.Method <- "TELEHEALTH"
+current_last_wait_site_tele <- current_last_wait_site_tele %>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+
+current_last_wait_site_combined <- bind_rows(current_last_wait_site_all, current_last_wait_site_inPerson, current_last_wait_site_tele)
+current_last_wait_site_combined <- merge(current_last_wait_site_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_wait_site_combined <- current_last_wait_site_combined %>%
+  select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
+  arrange(Appt.DateYear, New.PT2) %>%
+  arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
+current_last_wait_site_combined <- current_last_wait_site_combined %>%
+  pivot_wider(
+    names_from = Visit.Method:New.PT2,
+    values_from = days
+  )
+my_color_bar <- function (color = "lightgray", fixedWidth=100,...)
+{
+        formatter("span", style = function(x) style(display = "inline-block",
+                                                `border-radius` = "0px", `padding-right` = "0px",
+                                                `background-color` = csscolor(color),
+                                                width = ifelse(is.na(x),"0px", paste(fixedWidth*(x/30),"px",sep="")),
+                                                ...))
+}
+# unit.scale = function(x) x/max(x)
+# wait_formatter <- function(x){
+#   if(x<=14){my_color_bar("#00b800")(x)
+#     }else if(x>=30){my_color_bar("#ff3300")(x)
+#     }else{my_color_bar("orange")(x)}
+# }
+wait_formatter <- function(x){
+  ifelse(is.na(x), my_color_bar("white")(x),
+         ifelse(x<=14, my_color_bar("#00b800")(x),
+                ifelse(x>=30, my_color_bar("#ff3300")(x),
+                       my_color_bar("orange")(x))))
+}
+current_last_wait_site_combined <- current_last_wait_site_combined %>% mutate_if(is.numeric, wait_formatter)
+col_names <- c("Week of", rep(c("All","Established","New"),3))
+header_above <- c("title" = length(current_last_wait_site_combined))
+names(header_above) <- paste0(site, " Primary Care Time to Appointment (Median in Days)")
+header_above_2 <- c("title" = length(current_last_wait_site_combined))
+names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.DateYear), " to ",
+                                                            strftime(max(time_to_appt_all$Appt.DateYear), format = "%A"), ", ",max(time_to_appt_all$Appt.DateYear))
+current_last_wait_site_combined %>%
+  select(everything()) %>%
+  kable(escape = F, align = c("c",rep("l",9)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
+                row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px", color = "black", bold = T) %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px", color = "black", bold = T) %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px", color = "black", bold = T) %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_wait_site_combined), bold = T) %>%
+  footnote(general_title = "",
+           general = "Status: <span style='color: green;'>Green:</span> <=14 days,
+           <span style='color: orange;'>Orange:</span> >14 & <30 days,
+           <span style='color: red;'>Red:</span> >=30 days",
+           escape = FALSE)
+}
+```
+
+
+```{r Site Primary Care New Patient Ratio Function, echo = FALSE, warning = FALSE, message = FALSE}
+current_last_new_site <- function(site){
+  # site <- "MSUS"
+# New Patients Scheduled within 14 days --------------------------------------------------------------------
+current_last_new_site <- time_to_appt_all %>%
+  filter(Campus == site) %>%
+  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+  mutate(within.14 = ifelse(Wait.Time <= 14, "Yes","No")) %>%
+  group_by(Appt.Made.Year, Appt.Made.WeekNum, Visit.Method, New.PT2, within.14) %>%
+  summarise(count = n()) %>%
+  rename(Appt.Year = Appt.Made.Year,
+         Appt.WeekNum = Appt.Made.WeekNum)
+current_last_new_site <- merge(current_last_new_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_new_site_total <- current_last_new_site %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_site_person <- current_last_new_site %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_site_tele <- current_last_new_site %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  arrange(Appt.DateYear) %>%
+  group_by(Appt.DateYear, New.PT2, within.14) %>%
+  summarise(count = sum(count)) %>%
+  pivot_wider(names_from = within.14,
+              values_from = count,
+              values_fill = 0) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = c(No,Yes),
+              values_fill = 0) %>%
+  mutate(new_perc = percent((No_New + Yes_New)/(No_Established + Yes_Established),0),
+         new_total = (No_New + Yes_New),
+         new_14days = percent(Yes_New/new_total,0)) %>%
+  dplyr::select(Appt.DateYear, new_perc, new_total, new_14days)
+current_last_new_site_all <- merge(current_last_new_site_total, current_last_new_site_person, by = "Appt.DateYear")
+current_last_new_site_all <- merge(current_last_new_site_all, current_last_new_site_tele, by = "Appt.DateYear")
+col_names <- c("Week of", rep(c("New Patient Ratio","Total New Patients Scheduled","New Patients Scheduled <= 14 days"),3))
+header_above <- c("title" = length(current_last_new_site_all))
+names(header_above) <- paste0(site, " Primary Care New Patients Scheduled <= 14 Days")
+header_above_2 <- c("title" = length(current_last_new_site_all))
+names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.Made.DateYear), " to ",
+                                                            # strftime(max(time_to_appt_all$Appt.Made.DateYear), format = "%A"), ", ",
+                                max(time_to_appt_all$Appt.Made.DateYear))
+current_last_new_site_all %>%
+  select(everything()) %>%
+  # mutate_if(is.numeric, round, digits = 0) %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
+                row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above,
+                   background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px", color = "black") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px", color = "black") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px", color = "black") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_new_site_all), bold = T) %>%
+  column_spec(c(4,7,10), color = "#00b800", bold = T)
+  # footnote(general_title = "",
+  #          general = "Status: <span style='color: green;'>Green:</span> <=14 days,
+  #          <span style='color: orange;'>Orange:</span> >14 & <30 days,
+  #          <span style='color: red;'>Red:</span> >=30 days",
+  #          escape = FALSE)
+}
+```
+
+
+```{r Department Time to Appointment Metrics, echo = FALSE, warning = FALSE, message = FALSE}
+# Time to Appointment by Visit Method and Patient Type ---------------------------------------------
+current_last_wait_dept <- function(site){
+  # site <- "MSBI"
+  current_last_wait_dept_all_all <- time_to_appt_all %>%
+  filter(Campus == site) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  group_by(Department, Appt.Year, Appt.WeekNum) %>%
+  summarise(All = median(round(Wait.Time,0)))
+
+current_last_wait_dept_all_ptType <- time_to_appt_all %>%
+  # filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  group_by(Department, Appt.Year, Appt.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+  pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_dept_all <- merge(current_last_wait_dept_all_all, current_last_wait_dept_all_ptType)
+current_last_wait_dept_all <- current_last_wait_dept_all %>%
+  pivot_longer(
+    4:6,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_dept_all$Visit.Method <- "Total"
+current_last_wait_dept_inPerson_all <- time_to_appt_all %>%
+  # filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Department, Appt.Year, Appt.WeekNum) %>%
+  summarise(All = median(Wait.Time))
+current_last_wait_dept_inPerson_ptType <- time_to_appt_all %>%
+  # filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  group_by(Department, Appt.Year, Appt.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_dept_inPerson <- merge(current_last_wait_dept_inPerson_all, current_last_wait_dept_inPerson_ptType)
+current_last_wait_dept_inPerson <- current_last_wait_dept_inPerson %>%
+  pivot_longer(
+    4:6,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_dept_inPerson$Visit.Method <- "IN PERSON"
+current_last_wait_dept_tele_all <- time_to_appt_all %>%
+  # filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Department, Appt.Year, Appt.WeekNum) %>%
+  summarise(All = median(Wait.Time))
+current_last_wait_dept_tele_ptType <- time_to_appt_all %>%
+  # filter(Appt.Year == todays_year) %>%
+  filter(Appt.WeekNum == todays_week) %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  group_by(Department, Appt.Year, Appt.WeekNum, New.PT2) %>%
+  summarise(days = median(Wait.Time)) %>%
+    pivot_wider(
+    names_from = New.PT2,
+    values_from = days
+  )
+current_last_wait_dept_tele <- merge(current_last_wait_dept_tele_all, current_last_wait_dept_tele_ptType)
+current_last_wait_dept_tele <- current_last_wait_dept_tele %>%
+  pivot_longer(
+    4:6,
+    names_to = "New.PT2",
+    values_to = "days"
+  )
+current_last_wait_dept_tele$Visit.Method <- "TELEHEALTH"
+current_last_wait_dept_combined <- bind_rows(current_last_wait_dept_all, current_last_wait_dept_inPerson, current_last_wait_dept_tele)
+current_last_wait_dept_combined <- merge(current_last_wait_dept_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_wait_dept_combined <- current_last_wait_dept_combined %>%
+  select(Department, Visit.Method, New.PT2, days) %>%
+  arrange(Department) %>%
+  arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
+current_last_wait_dept_combined <- current_last_wait_dept_combined %>%
+  pivot_wider(
+    names_from = Visit.Method:New.PT2,
+    values_from = days
+  ) %>%
+  arrange(desc(Total_All))
+days_formatter <- formatter("span",
+  style = x ~ style(color = ifelse(x <= 14, "#00b800",
+    ifelse(x >= 30, "#ff3300", "orange"))))
+current_last_wait_dept_combined <- current_last_wait_dept_combined %>% mutate_if(is.numeric, days_formatter)
+col_names <- c("Department", rep(c("All","Established","New"),3))
+header_above <- c("title" = length(current_last_wait_dept_combined))
+names(header_above) <- paste0(site, " Primary Care Time to Appointment (Median in Days)")
+header_above_2 <- c("title" = length(current_last_wait_dept_combined))
+names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.DateYear), " to ",
+                                                            strftime(max(time_to_appt_all$Appt.DateYear), format = "%A"), ", ",max(time_to_appt_all$Appt.DateYear))
+current_last_wait_dept_combined %>%
+  select(everything()) %>%
+  kable(escape = F, align = c("r",rep("c",9)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
+                row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px", color = "black") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px", color = "black") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px", color = "black") %>%
+  column_spec(1, width = "350px") %>%
+  footnote(general_title = "",
+           general = "Status: <span style='color: green;'>Green:</span> <=14 days,
+           <span style='color: orange;'>Orange:</span> >14 & <30 days,
+           <span style='color: red;'>Red:</span> >=30 days",
+           escape = FALSE)
+
+}
+```
+
+
+```{r Site Operational Metrics Function, echo = FALSE, warning = FALSE, message = FALSE}
+# Prior Week No Show Volume and Rate
+current_last_noShow_site <- function(site){
+  # site <- "MSQ"
+  # No Shows ----------------------------------------------------------------------------------------
+current_last_noShow_site <- no_show_rate %>%
+  filter(Campus == site) %>%
+  # filter(Appt.Year == todays_year) %>%
+  # filter(Appt.WeekNum %in% past_4_wks) %>%
+  group_by(Appt.Year, Appt.WeekNum, Visit.Method, Appt.Status) %>%
+  summarise(total = sum(weekly_vol)) %>%
+  pivot_wider(
+    names_from = Visit.Method,
+    values_from = total
+  )
+current_last_noShow_site[is.na(current_last_noShow_site)] <- 0
+current_last_noShow_site <- current_last_noShow_site %>%
+  mutate(Total = `IN PERSON` + TELEHEALTH) %>%
+  pivot_longer(
+    4:6,
+    names_to = "Visit.Method",
+    values_to = "total"
+  ) %>%
+  pivot_wider(
+    names_from = Appt.Status,
+    values_from = total
+  )
+cols <- c("Appt.Year","Appt.WeekNum","Visit.Method","Arrived","No Show")
+Missing <- setdiff(cols, names(current_last_noShow_site))  # Find names of missing columns
+current_last_noShow_site[Missing] <- 0                    # Add them, filled with '0's
+current_last_noShow_site <- current_last_noShow_site[cols]                       # Put columns in desired order
+current_last_noShow_site <- current_last_noShow_site %>%
+  mutate(noShow_rate = percent((`No Show`/(Arrived+`No Show`)),0))
+current_last_noShow_site <- merge(current_last_noShow_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_noShow_site <- current_last_noShow_site %>%
+  arrange(Appt.WeekNum) %>%
+  select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
+
+current_last_noShow_site_total <- current_last_noShow_site %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_last_noShow_site_person <- current_last_noShow_site %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_last_noShow_site_tele <- current_last_noShow_site %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_last_noShow_site_all <- merge(current_last_noShow_site_total, current_last_noShow_site_person, by = "Appt.DateYear")
+current_last_noShow_site_all <- merge(current_last_noShow_site_all, current_last_noShow_site_tele, by = "Appt.DateYear")
+col_names <- c("Week of", rep(c("Arrived Volume","No Show Volume","No Show Rate"),3))
+header_above <- c("title" = length(current_last_noShow_site_all))
+names(header_above) <- paste0(site, " Prior Week No Show Volume and Rate")
+header_above_2 <- c("title" = length(current_last_noShow_site_all))
+names(header_above_2) <- paste0("Arrived visits from ",
+                              min(past_4_wks$Appt.DateYear)," to ",date_end)
+current_last_noShow_site_all %>%
+  select(everything()) %>%
+    mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
+         noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
+         noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
+    mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(2:4, background = "#EBEBF9", width = "100px") %>%
+  column_spec(5:7, background = "#F0F0F0", width = "100px") %>%
+  column_spec(8:10, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(current_last_noShow_site_all), bold = T) %>%
+  footnote(general_title = "",
+           general = "No Show Rate = No Show Patients / No Show and Arrived Patients",
+           escape = FALSE) %>%
+  column_spec(c(4,7,10), color = "white", bold = T)
+}
+```
+
+
+```{r Department Operational Metrics Function, echo = FALSE, warning = FALSE, message = FALSE}
+# Prior Week No Show Volume and Rate
+current_last_noShow_dept <- function(site){
+  # site <- "MSUS"
+  # No Shows ----------------------------------------------------------------------------------------
+current_last_noShow_dept <- no_show_rate %>%
+  filter(Campus == site) %>%
+  # filter(Appt.Year == todays_year) %>%
+  # filter(Appt.WeekNum %in% past_4_wks) %>%
+  group_by(Campus.Specialty,Department, Visit.Method, Appt.Status) %>%
+  summarise(total = sum(weekly_vol)) %>%
+  pivot_wider(
+    names_from = Visit.Method,
+    values_from = total
+  )
+current_last_noShow_dept[is.na(current_last_noShow_dept)] <- 0
+current_last_noShow_dept <- current_last_noShow_dept %>%
+  mutate(Total = `IN PERSON` + TELEHEALTH) %>%
+  pivot_longer(
+    4:6,
+    names_to = "Visit.Method",
+    values_to = "total"
+  ) %>%
+  pivot_wider(
+    names_from = Appt.Status,
+    values_from = total
+  )
+cols <- c("Campus.Specialty","Department","Visit.Method","Arrived","No Show")
+Missing <- setdiff(cols, names(current_last_noShow_dept))  # Find names of missing columns
+current_last_noShow_dept[Missing] <- 0                    # Add them, filled with '0's
+current_last_noShow_dept <- current_last_noShow_dept[cols]                       # Put columns in desired order
+current_last_noShow_dept <- current_last_noShow_dept %>%
+  mutate(noShow_rate = percent((`No Show`/(Arrived+`No Show`)),0))
+# current_last_noShow_dept <- merge(current_last_noShow_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+current_last_noShow_dept <- current_last_noShow_dept %>%
+  # arrange(Appt.WeekNum) %>%
+  select(Campus.Specialty, Department, Visit.Method, Arrived, `No Show`, noShow_rate)
+
+current_last_noShow_dept_total <- current_last_noShow_dept %>%
+  filter(Visit.Method == "Total") %>%
+  select(-Visit.Method)
+current_last_noShow_dept_person <- current_last_noShow_dept %>%
+  filter(Visit.Method == "IN PERSON") %>%
+  select(-Visit.Method)
+current_last_noShow_dept_tele <- current_last_noShow_dept %>%
+  filter(Visit.Method == "TELEHEALTH") %>%
+  select(-Visit.Method)
+current_last_noShow_dept_all <- merge(current_last_noShow_dept_total, current_last_noShow_dept_person, by = c("Campus.Specialty","Department"))
+current_last_noShow_dept_all <- merge(current_last_noShow_dept_all, current_last_noShow_dept_tele, by = c("Campus.Specialty","Department"))
+current_last_noShow_dept_all <- current_last_noShow_dept_all %>%
+     mutate_all(., ~replace(., is.na(.), 0))
+
+col_names <- c("Specialty","Department", rep(c("Arrived Volume","No Show Volume","No Show Rate"),3))
+header_above <- c("title" = length(current_last_noShow_dept_all))
+names(header_above) <- paste0(site, " No Show Volume and Rate by Department")
+header_above_2 <- c("title" = length(current_last_noShow_dept_all))
+names(header_above_2) <- paste0("Arrived visits from ",
+                              min(past_4_wks$Appt.DateYear)," to ",date_end)
+current_last_noShow_dept_all %>%
+  select(everything()) %>%
+    mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
+         noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
+         noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
+    mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  kable(escape = F, align = c("r","r",rep("c",9)),
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" " = 2, "Total" = 3,  "In Person" = 3, "Telehealth" = 3), background = c("white","#221f72","#7f7f7f" ,"#00aeef"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, italic = T) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, line = F) %>%
+  column_spec(3:5, background = "#EBEBF9", width = "100px") %>%
+  column_spec(6:8, background = "#F0F0F0", width = "100px") %>%
+  column_spec(9:11, background = "#E6F8FF", width = "100px") %>%
+  column_spec(1, width = "200px") %>%
+  column_spec(2, width = "400px") %>%
+  column_spec(c(5,8,11), color = "white") %>%
+    collapse_rows(1) %>%
+  footnote(general_title = "",
+           general = "No Show Rate = No Show Patients / No Show and Arrived Patients",
+           escape = FALSE)
+}
+```
+
+
+```{r Site Hand Hygiene, echo = FALSE, warning = FALSE, message = FALSE}
+hh_comp_site <- function(campus){
+  #
+  # campus <- "MSH- AMBULATORY CARE"
+  # Hand Hygience Compliance
+hh_site <- hh_data_merged_role %>%
+  filter(site == campus)
+hh_site <- merge(hh_site, past_4_wks[,c("Appt.Year","Appt.WeekNum")],)
+hh_sites <- unique(hh_site$site)
+hh_site_role <- hh_site %>%
+  group_by(Appt.Year, Appt.WeekNum, role) %>%
+  summarise(Yes = sum(Yes),
+            No = sum(No),
+            total_obs = sum(total_obs))
+hh_site_all <- hh_site %>%
+  mutate(role = ifelse(grepl("bef", role, fixed = T),"a-bef","b-aft")) %>%
+  group_by(Appt.Year, Appt.WeekNum, role) %>%
+  summarise(Yes = sum(Yes),
+            No = sum(No),
+            total_obs = sum(total_obs))
+hh_site <- bind_rows(hh_site_role, hh_site_all)
+hh_site <- merge(hh_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+hh_site <- hh_site %>%
+  mutate(perc_comp = percent(Yes/total_obs,0)) %>%
+  select(Appt.DateYear, role, perc_comp, total_obs)
+hh_site_final <- hh_site %>%
+  pivot_wider(names_from = role,
+              values_from = c("total_obs","perc_comp"))
+  # dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
+  #               total_obs_provider_hands_bef, perc_comp_provider_hands_bef, total_obs_provider_hands_aft, perc_comp_provider_hands_aft,
+  #               total_obs_nurse_hands_bef, perc_comp_nurse_hands_bef, total_obs_nurse_hands_aft, perc_comp_nurse_hands_aft,
+  #               total_obs_mt_hands_bef, perc_comp_mt_hands_bef, total_obs_mt_hands_aft, perc_comp_mt_hands_aft)
+cols <- c("Appt.DateYear", "total_obs_a-bef", "perc_comp_a-bef", "total_obs_b-aft", "perc_comp_b-aft",
+          "total_obs_provider_hands_bef", "perc_comp_provider_hands_bef", "total_obs_provider_hands_aft",
+          "perc_comp_provider_hands_aft", "total_obs_nurse_hands_bef", "perc_comp_nurse_hands_bef", "total_obs_nurse_hands_aft",
+          "perc_comp_nurse_hands_aft", "total_obs_mt_hands_bef", "perc_comp_mt_hands_bef", "total_obs_mt_hands_aft",
+          "perc_comp_mt_hands_aft")
+missing <- setdiff(cols, names(hh_site_final))
+hh_site_final[missing] <- 0
+hh_site_final <- hh_site_final[cols]
+comp_formatter <- formatter("span",
+  style = x ~ style(color = ifelse(x >= 0.9, "#00b800", "#ff3300")))
+
+
+
+
+
+
+
+
+
+
+hh_site_final <- hh_site_final %>% mutate_if(is.formattable, comp_formatter)
+col_names <- c("Week of", rep(c("Obs # Before","Comp % Before","Obs # After","Comp % After"),4))
+header_above <- c("title" = length(hh_site_final))
+names(header_above) <- paste0(campus, " Ambulatory Hand Hygiene Compliance")
+header_above_2 <- c("title" = length(hh_site_final))
+names(header_above_2) <- paste0("Data Entered from ",
+                              min(past_4_wks$Appt.DateYear)," to ",max(hh_data_merged$date, na.rm = T))
+hh_site_final %>%
+  select(everything()) %>%
+  mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+  # mutate_if(str_detect("%"), function(x) {
+  # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+  kable(escape = F, align = "c",
+        col.names = col_names) %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c(" ", "All" = 4,  "Provider" = 4, "Nurse" = 4, "Med Asst/Other" = 4),
+                   background = c("white","#221f72","#7f7f7f" ,"#00aeef","#d80b8c"), color = "white", font_size = 14) %>%
+  add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = TRUE) %>%
+  add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+  column_spec(2:5, background = "#EBEBF9", width = "70px") %>%
+  column_spec(6:9, background = "#F0F0F0", width = "70px") %>%
+  column_spec(10:13, background = "#E6F8FF", width = "70px") %>%
+  column_spec(14:17, background = "#feecf7", width = "70px") %>%
+  column_spec(1, width = "150px") %>%
+  row_spec(nrow(hh_site_final), bold = T) %>%
+   footnote(general_title = "",
+           general = "Target: 90%",
+           escape = FALSE)
+#
+# hh_site <- hh_site %>%
+#   pivot_longer(Yes:total_obs,
+#                names_to = "compliance",
+#                values_to = "count") %>%
+#   group_by(Appt.Year, Appt.WeekNum, role, compliance) %>%
+#   summarise(count = sum(count))
+#
+#
+# hh_site <- hh_site %>%
+#   pivot_wider(names_from = role,
+#               values_from = count)
+#
+# cols <- c("Appt.Year","Appt.WeekNum","compliance","mt_hands_aft","mt_hands_bef","nurse_hands_aft","nurse_hands_bef","provider_hands_aft","provider_hands_bef")
+# missing <- setdiff(cols, names(hh_site))
+# hh_site[missing] <- 0
+# hh_site <- hh_site[cols]
+#
+# hh_site <- hh_site %>%
+#   pivot_longer(mt_hands_aft:provider_hands_bef,
+#                names_to = "role",
+#                values_to = "count") %>%
+#   pivot_wider(names_from = compliance,
+#               values_from = count) %>%
+#   mutate(order = ifelse(grepl("bef", role, fixed = T),"a-bef","b-aft"))
+#
+# hh_site <- merge(hh_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+#
+# hh_site_role <- hh_site %>%
+#   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
+#   select(Appt.DateYear, role, perc_comp, total_obs, order)
+#
+# hh_site_all <- hh_site %>%
+#   group_by(Appt.DateYear, order) %>%
+#   summarise(total_obs = sum(total_obs),
+#             Yes = sum(Yes)) %>%
+#   mutate(perc_comp =percent(Yes/total_obs,0),
+#          role = "All") %>%
+#   select(Appt.DateYear, order, perc_comp, total_obs) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+# hh_site_prov <- hh_site_role %>%
+#   filter(grepl("provider",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(Appt.DateYear, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+#
+# hh_site_nurse <- hh_site_role %>%
+#   filter(grepl("nurse",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(Appt.DateYear, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+# hh_site_mt <- hh_site_role %>%
+#   filter(grepl("mt",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(Appt.DateYear, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+#
+# hh_site_final <- merge(hh_site_all, hh_site_prov, by = "Appt.DateYear")
+# hh_site_final <- merge(hh_site_final, hh_site_nurse, by = "Appt.DateYear")
+# hh_site_final <- merge(hh_site_final, hh_site_mt, by = "Appt.DateYear")
+#
+# colnames(hh_site_final) <- c("Appt.DateYear","perc_bef_all", "total_bef_all", "perc_aft_all", "total_aft_all",
+#                              "perc_bef_prov", "total_bef_prov", "perc_aft_prov", "total_aft_prov",
+#                              "perc_bef_nurse", "total_bef_nurse", "perc_aft_nurse", "total_aft_nurse",
+#                              "perc_bef_mt", "total_bef_mt", "perc_aft_mt", "total_aft_mt")
+#
+# comp_formatter <- formatter("span",
+#   style = x ~ style(color = ifelse(x >= 0.9, "#00b800", "red")))
+#
+#
+# hh_site_final <- hh_site_final %>% mutate_if(is.formattable, comp_formatter)
+#
+# col_names <- c("Week of", rep(c("Comp % Before","Obs # Before","Comp % After","Obs # After"),4))
+#
+# header_above <- c("title" = length(hh_site_final))
+# names(header_above) <- paste0(campus, " Ambulatory Hand Hygiene Compliance")
+#
+# header_above_2 <- c("title" = length(hh_site_final))
+# names(header_above_2) <- paste0("Data Entered from ",
+#                               min(past_4_wks$Appt.DateYear)," to ",max(hh_data_merged$date, na.rm = T))
+#
+# hh_site_final %>%
+#   select(everything()) %>%
+#   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+#   # mutate_if(str_detect("%"), function(x) {
+#   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+#   kable(escape = F, align = "c",
+#         col.names = col_names) %>%
+#   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+#   add_header_above(c(" ", "All" = 4,  "Provider" = 4, "Nurse" = 4, "Med Asst/Other" = 4),
+#                    background = c("white","#221f72","#7f7f7f" ,"#00aeef","#d80b8c"), color = "white", font_size = 14) %>%
+#   add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = TRUE) %>%
+#   add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+#   column_spec(2:5, background = "#EBEBF9", width = "70px") %>%
+#   column_spec(6:9, background = "#F0F0F0", width = "70px") %>%
+#   column_spec(10:13, background = "#E6F8FF", width = "70px") %>%
+#   column_spec(14:17, background = "#feecf7", width = "70px") %>%
+#   column_spec(1, width = "150px") %>%
+#   row_spec(nrow(hh_site_final), bold = T)
+
+}
+```
+
+
+```{r Department Hand Hygiene, echo = FALSE, warning = FALSE, message = FALSE}
+# hh_comp_dept <- function(campus){
+#
+#   # campus <- "MSM"
+#   # Hand Hygience Compliance
+# hh_dept <- merge(hh_data_merged_role %>% filter(site ==campus), past_4_wks[,c("Appt.Year","Appt.WeekNum")],)
+#
+# hh_dept <- hh_dept %>%
+#   filter(Appt.WeekNum == todays_week) %>%
+#   pivot_longer(Yes:total_obs,
+#                names_to = "compliance",
+#                values_to = "count") %>%
+#   group_by(Appt.Year, Appt.WeekNum, unit, role, compliance) %>%
+#   summarise(count = sum(count)) %>%
+#   pivot_wider(names_from = compliance,
+#               values_from = count) %>%
+#   mutate(order = ifelse(grepl("bef", role, fixed = T),"a-bef","b-aft"))
+#
+# hh_dept <- merge(hh_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
+#
+# hh_dept_role <- hh_dept %>%
+#   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
+#   select(unit, role, perc_comp, total_obs, order)
+#
+# hh_dept_all <- hh_dept %>%
+#   group_by(unit, order) %>%
+#   summarise(total_obs = sum(total_obs),
+#             Yes = sum(Yes)) %>%
+#   mutate(perc_comp =percent(Yes/total_obs,0),
+#          role = "All") %>%
+#   select(unit, order, perc_comp, total_obs) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+# hh_dept_prov <- hh_dept_role %>%
+#   filter(grepl("provider",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(unit, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+#
+# hh_dept_nurse <- hh_dept_role %>%
+#   filter(grepl("nurse",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(unit, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+# hh_dept_mt <- hh_dept_role %>%
+#   filter(grepl("mt",role,fixed = T) == TRUE) %>%
+#   select(-role) %>%
+#   arrange(unit, order) %>%
+#   pivot_wider(
+#               names_from = order,
+#               values_from = c(perc_comp,total_obs)) %>%
+#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#
+#
+# hh_dept_final <- merge(hh_dept_all, hh_dept_prov, by = "unit")
+# hh_dept_final <- merge(hh_dept_final, hh_dept_nurse, by = "unit")
+# hh_dept_final <- merge(hh_dept_final, hh_dept_mt, by = "unit")
+#
+# colnames(hh_dept_final) <- c("unit","perc_bef_all", "total_bef_all", "perc_aft_all", "total_aft_all",
+#                              "perc_bef_prov", "total_bef_prov", "perc_aft_prov", "total_aft_prov",
+#                              "perc_bef_nurse", "total_bef_nurse", "perc_aft_nurse", "total_aft_nurse",
+#                              "perc_bef_mt", "total_bef_mt", "perc_aft_mt", "total_aft_mt")
+#
+# comp_formatter <- formatter("span",
+#   style = x ~ style(color = ifelse(x >= 0.9, "#00b800", "red")))
+#
+#
+# hh_dept_final <- hh_dept_final %>% mutate_if(is.formattable, comp_formatter)
+#
+# col_names <- c("Department", rep(c("Comp % Before","Obs # Before","Comp % After","Obs # After"),4))
+#
+# header_above <- c("title" = length(hh_dept_final))
+# names(header_above) <- paste0(campus, " Ambulatory Hand Hygiene Compliance by Department")
+#
+# header_above_2 <- c("title" = length(hh_dept_final))
+# names(header_above_2) <- paste0("Data Entered from ",
+#                               min(hh_dept$Appt.DateYear)," to ",max(hh_data_merged_role$date, na.rm = T))
+#
+# hh_dept_final %>%
+#   select(everything()) %>%
+#   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
+#   # mutate_if(str_detect("%"), function(x) {
+#   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
+#   kable(escape = F, align = "c",
+#         col.names = col_names) %>%
+#   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+#   add_header_above(c(" ", "All" = 4,  "Provider" = 4, "Nurse" = 4, "Med Asst/Other" = 4),
+#                    background = c("white","#221f72","#7f7f7f" ,"#00aeef","#d80b8c"), color = "white", font_size = 14) %>%
+#   add_header_above(header_above_2, background = "white", color = "black", font_size = 16, bold = T, align = "c", italic = TRUE) %>%
+#   add_header_above(header_above, background = "white", color = "black", font_size = 22, bold = T, align = "c", line = FALSE) %>%
+#   column_spec(2:5, background = "#EBEBF9", width = "70px") %>%
+#   column_spec(6:9, background = "#F0F0F0", width = "70px") %>%
+#   column_spec(10:13, background = "#E6F8FF", width = "70px") %>%
+#   column_spec(14:17, background = "#feecf7", width = "70px") %>%
+#   column_spec(1, width = "300px") %>%
+#   row_spec(nrow(hh_dept_final), bold = T) %>%
+#   footnote(general_title = "",
+#            general = "Target: 90%",
+#            escape = FALSE)
+# }
+```
+
+
+```{r Site Metrics Output, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
+# sites <- as.vector(unique(scheduling_data$Campus))
+sites <- as.vector(c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD"))
+# missing_chg_sites <- as.vector(unique(missing_chg_data$Campus))
+primary_care_sites <- as.vector(unique((time_to_appt_all %>% filter(Appt.Year == todays_year))$Campus))
+# primary_care_depts <- as.vector(unique((time_to_appt_all %>% filter(Appt.WeekNum == todays_week))$Campus))
+hh_sites <- as.vector(hh_sites)
+# rm(scheduling_data)
+invisible(gc())
+# i <- "MSUS"
+for (i in sites) {
+  cat(" \n##", i,"\n")
+  cat(" \n###", paste0("1. ",i," Open Encounters"),"{.tabset .tabset-fade .tabset-pills}","\n")
+  cat(" \n####", "Site Total","\n")
+  print(open_encounters_site(site = i))
+  cat(" \n####", "Department Breakdown","\n")
+  print(open_encounters_dept(site = i))
+  cat(" \n###", paste0("2. ",i," Volume"),"\n")
+  # cat(" \n####", "By Site","\n")
+  print(current_last_vol_site(site = i))
+  print(current_same_vol_site(site = i))
+
+  if (i %in% primary_care_sites){
+  cat(" \n###", paste0("3. ",i," Primary Care Access"),"\n")
+  # cat(" \n####", "By Site","\n")
+  print(current_last_wait_site(site = i))
+  print(current_last_new_site(site = i))
+  }
+  # cat(" \n###", paste0("4. ",i," Operational Improvement - No Shows"),"\n")
+  # # cat(" \n####", "By Site","\n")
+  # print(current_last_noShow_site(site = i))
+  if (i %in% hh_sites){
+  cat(" \n###", paste0("5. ",i," Hand Hygiene"),"\n")
+  # cat(" \n####", "By Site","\n")
+  print(hh_comp_site(i))
+  }
+  }
+# With Department Level Breakdown -----------------------------
+# for (i in sites) {
+#
+#   cat(" \n##", i,"\n")
+#
+#   if(i %in% missing_chg_sites){
+#   cat(" \n###", paste0("1. ",i," Epic Open Encounters"),"{.tabset .tabset-fade .tabset-pills}","\n")
+#   cat(" \n####", "By Site","\n")
+#   print(open_encounters_site(site = i))
+#   cat(" \n####", "By Department","\n")
+#   print(open_encounters_dept(site = i))
+#   }
+#
+#   cat(" \n###", paste0("2. ",i," Volume"),"{.tabset .tabset-fade .tabset-pills}","\n")
+#   cat(" \n####", "By Site","\n")
+#   print(current_last_vol_site(site = i))
+#   print(current_same_vol_site(site = i))
+#   cat(" \n####", "By Department","\n")
+#   print(current_last_vol_dept(site = i))
+#   print(current_same_vol_dept(site = i))
+#
+#   if(i %in% primary_care_sites){
+#     cat(" \n###", paste0("3. ",i," Primary Care Access"),"{.tabset .tabset-fade .tabset-pills}","\n")
+#     cat(" \n####", "By Site","\n")
+#     print(current_last_wait_site(site = i))
+#     if(i %in% primary_care_depts){
+#       cat(" \n####", "By Department","\n")
+#       print(current_last_wait_dept(site = i))
+#     }
+#   }
+#
+#   cat(" \n###", paste0("4. ",i," Operational Improvement - No Shows"),"{.tabset .tabset-fade .tabset-pills}","\n")
+#   cat(" \n####", "By Site","\n")
+#   print(current_last_noShow_site(site = i))
+#   cat(" \n####", "By Department","\n")
+#   print(current_last_noShow_dept(site = i))
+#
+#   if(i %in% hh_sites){
+#   cat(" \n###", paste0("5. ",i," Hand Hygiene"),"{.tabset .tabset-fade .tabset-pills}","\n")
+#   cat(" \n####", "By Site","\n")
+#   print(hh_comp_site(campus = i))
+#   cat(" \n####", "By Department","\n")
+#   print(hh_comp_dept(campus = i))
+#   }
+#
+#   }
+```
+_________________________________________________________________________________________________________________________________________________________________
+*End of Report.*
+
+
+## Reference
+### Metric Definitions
+```{r Metric Definitions, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
+metrics_def <- data.frame(Metric = c("% Encounters Closed",
+                                         "% Encuonters Closed <=7 Days",
+                                         "% Encounters Open",
+                                         "Median Open Encounter Time",
+                                         "% Open Encounters >7 Days",
+                                         "Volume",
+                                         "Time to New Appointment (Median in Days)",
+                                         "% New Patients Scheduled <=14 Days",
+                                         "No Show Rate",
+                                         "Hand Hygiene - Compliance %"),
+                              Definition = c("Total number enoucnters closed over total number of encounters open/completed.",
+                                             "Total number of encounters closed within 7 days of date of appointment over total number of encounters open/completed.",
+                                             paste0("Total number of encounters remaining oepn over total number of encounters open/completed.","\n","*Refer to the Epic Open Encounters Exclusion Criteria below.)"),
+                                             "Median of days open for all encounters remaining oepn.",
+                                             "Total number of encounters open more than 7 days of date of appointment over total number of encounters remaining open.",
+                                             "Total number of visits completed.",
+                                             "Median of all new patient wait times (days from appointment requested to day of visit).",
+                                             "Total number of new patients scheduled within 14 days from appointment requetsed to day of visit over total number of nwe patients scheduled.",
+                                             "Total number of no show appointments over total number of arrived and no show appointments.",
+                                             "Total number of surveys indicating hands washed before/after encounter over total number of surveys submitted."),
+                              Target = c("100%",
+                                         "100%",
+                                         "0%",
+                                         "NA",
+                                         "0%",
+                                         "TBD",
+                                         "14 days",
+                                         "100%",
+                                         "TBD",
+                                         "90%"))
+metrics_def %>%
+  select(everything()) %>%
+  kable(escape = F, align = "l") %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c("Metric Definitions and Targets" = length(metrics_def)),
+                   background = "#221f72", color = "white", font_size = 14) %>%
+  column_spec(1, width = "300px")
+```
+
+
+### Epic Open Encounters Exclusion Criteria {.tabset .tabset-fade .tabset-pills}
+#### Departments Excluded
+```{r Epic Open Encounters Departments, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
+missing_exc_dept %>%
+  select(everything()) %>%
+  kable(escape = F, align = "l") %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c("Departments Excluded from Open Encounters Metric" = length(missing_exc_dept)),
+                   background = "#221f72", color = "white", font_size = 14) %>%
+  column_spec(1, width = "300px")
+```
+
+
+#### Resources Excluded
+```{r Epic Open Encounters Resources, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
+missing_exc_resource %>%
+  select(everything()) %>%
+  kable(escape = F, align = "l") %>%
+  kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
+  add_header_above(c("Resources Excluded from Open Encounters Metric" = length(missing_exc_resource)),
+                   background = "#221f72", color = "white", font_size = 14) %>%
+  column_spec(1, width = "300px")
+```
+
+
+### Epic Department Mapping {.tabset .tabset-fade .tabset-pills}
+```{r Epic Department Mapping Output, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
+invisible(gc())
+epic_sites <- as.vector(unique(epic_depts$Campus))
+for (i in epic_sites) {
+  cat(" \n####", i,"\n")
+  print(epic_depts_site(site = i))
+  invisible(gc())
+}
+```
+
