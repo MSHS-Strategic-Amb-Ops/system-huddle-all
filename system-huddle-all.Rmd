@@ -665,7 +665,7 @@ invisible(gc())
 
 
 ```{r Sinai Logo, echo=FALSE, out.width = '30%'}
-knitr::include_graphics("Mount_Sinai_Logo_H.png")
+# knitr::include_graphics("Mount_Sinai_Logo_H.png")
 ```
 
 
