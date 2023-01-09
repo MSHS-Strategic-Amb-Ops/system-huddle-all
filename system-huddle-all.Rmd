@@ -607,33 +607,32 @@ invisible(gc())
 
 ```{r Volume Metrics Data, echo = FALSE, warning = FALSE, message = FALSE}
 # Volume Data
-vol_past_month <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-  filter(Appt.WeekNum %in% unique(past_year$Appt.WeekNum)) %>%
-  arrange(Appt.Year, Appt.WeekNum) %>%
-  group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method) %>%
-  summarise(weekly_vol = n()) %>%
-  pivot_wider(
-    names_from = Visit.Method,
-    values_from = weekly_vol,
-    values_fill=list(weekly_vol=0)
-  ) %>%
-  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-  pivot_longer(
-    6:8,
-    names_to = "Visit.Method",
-    values_to = "weekly_vol"
-  ) %>%
-  mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
-invisible(gc())
+# vol_past_month <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   filter(Appt.WeekNum %in% unique(past_year$Appt.WeekNum)) %>%
+#   arrange(Appt.Year, Appt.WeekNum) %>%
+#   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method) %>%
+#   summarise(weekly_vol = n()) %>%
+#   pivot_wider(
+#     names_from = Visit.Method,
+#     values_from = weekly_vol,
+#     values_fill=list(weekly_vol=0)
+#   ) %>%
+#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
+#   pivot_longer(
+#     6:8,
+#     names_to = "Visit.Method",
+#     values_to = "weekly_vol"
+#   ) %>%
+#   mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
+# invisible(gc())
 
 ```
 
 
 ```{r Primary Care Time to Appointment Data, echo = FALSE, warning = FALSE, message = FALSE}
 # Time to Appointment
-# time_to_appt_all <- merge(past_year_data, past_4_wks[,c("Appt.Year","Appt.WeekNum")])
 # time_to_appt_all <- scheduling_data %>%
 #   # mutate(Appt.Made.DateYear = as.Date(Appt.Made.DTTM, format="%Y-%m-%d"),
 #   #       Appt.Made.MonthYear = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"),
