@@ -1202,9 +1202,9 @@ highchart() %>%
   hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
 
 
-rm(vol_past_month)
-rm(new_vol_trending)
-rm(new_vol_trending_downtown)
+# rm(vol_past_month)
+# rm(new_vol_trending)
+# rm(new_vol_trending_downtown)
 invisible(gc())
 ```
 
