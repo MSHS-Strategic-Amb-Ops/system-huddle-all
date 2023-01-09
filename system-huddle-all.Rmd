@@ -1102,20 +1102,20 @@ invisible(gc())
 
 ### 3. New Patient Ratio Trending
 ```{r New Patient Volume Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
-# new_vol_trending <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.Year == 2023) %>%
-#   filter(Appt.DateYear <= date_end) %>%
-#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
-#   group_by(Campus, Appt.MonthYear, New.PT2) %>%
-#   summarise(total = n()) %>%
-#   pivot_wider(names_from = New.PT2,
-#               values_from = total) %>%
-#   mutate(total_vol = New + Established,
-#          new_perc = round((New/(total_vol))*100,0))
+new_vol_trending <- scheduling_data %>%
+  filter(Appt.Status == "Arrived") %>%
+  # filter(Appt.Year == 2023) %>%
+  filter(Appt.DateYear <= date_end) %>%
+  # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+  group_by(Campus, Appt.MonthYear, New.PT2) %>%
+  summarise(total = n()) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = total) %>%
+  mutate(total_vol = New + Established,
+         new_perc = round((New/(total_vol))*100,0))
 
-new_vol_trending <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending.rds")) 
+# new_vol_trending <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending.rds")) 
 
 map(unique(new_vol_trending$Campus), function(x){
 highchart() %>%
@@ -1152,22 +1152,22 @@ highchart() %>%
 
 --------------------------------------------------------------------------------
 ```{r New Patient Volume Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
-# new_vol_trending_downtown <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
-#   mutate(Campus = "MS Downtown") %>%
-#   filter(Appt.Year == 2023) %>%
-#   filter(Appt.DateYear <= date_end) %>%
-#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
-#   group_by(Campus, Appt.MonthYear, New.PT2) %>%
-#   summarise(total = n()) %>%
-#   pivot_wider(names_from = New.PT2,
-#               values_from = total) %>%
-#   mutate(total_vol = New + Established,
-#          new_perc = round((New/(total_vol))*100,0))
+new_vol_trending_downtown <- scheduling_data %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Campus %in% c("MSUS","MSDD","MSBI")) %>%
+  mutate(Campus = "MS Downtown") %>%
+  # filter(Appt.Year == 2023) %>%
+  filter(Appt.DateYear <= date_end) %>%
+  # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+  group_by(Campus, Appt.MonthYear, New.PT2) %>%
+  summarise(total = n()) %>%
+  pivot_wider(names_from = New.PT2,
+              values_from = total) %>%
+  mutate(total_vol = New + Established,
+         new_perc = round((New/(total_vol))*100,0))
 
-new_vol_trending_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending_downtown.rds")) 
+# new_vol_trending_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending_downtown.rds")) 
 
 map(unique(new_vol_trending_downtown$Campus), function(x){
 highchart() %>%
@@ -1251,7 +1251,7 @@ invisible(gc())
 new_perc_trend <- scheduling_data %>%
   filter(Campus != "MSBI") %>%
   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
-  filter(Appt.Made.Year == 2023) %>%
+  # filter(Appt.Made.Year == 2023) %>%
   filter(Appt.Made.DateYear <= date_end) %>%
   # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
   filter(New.PT2 == "New") %>%
@@ -1340,7 +1340,8 @@ invisible(gc())
 ```{r Hand Hygiene Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 hh_site <- hh_data_merged %>%
   mutate(Month = format(as.Date(date, format="%Y-%m-%d"), "%Y-%m")) %>%
-  filter(date >= date_start)
+  filter(date >= date_start & date <= date_end)
+
 # test <- hh_site %>%
 #   mutate(Group = ifelse(str_detect(role,"aft"), "After","Before")) %>%
 #   group_by(site, Month) %>%
@@ -1424,7 +1425,7 @@ invisible(gc())
 ```{r Hand Hygiene Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
 hh_downtown <- hh_data_merged %>%
   mutate(Month = format(as.Date(date, format="%Y-%m-%d"), "%Y-%m")) %>%
-  filter(date >= date_start)
+  filter(date >= date_start & date <= date_end)
 hh_downtown <- hh_downtown %>%
   filter(unit != "NULL") %>%
   filter(site %in% c("MSUS","MSDD","MSBI")) %>%
