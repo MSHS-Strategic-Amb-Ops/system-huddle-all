@@ -1494,7 +1494,7 @@ invisible(gc())
 #   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
 #                                          ,TRUE ~ "NO")) %>%
 #   filter(visit_exclude == "NO")
-  
+
 missing_ytd_data <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_ytd_data.rds")) %>%
   filter(Appt.Year == todays_year) 
 
@@ -1576,7 +1576,7 @@ invisible(gc())
 # Prior Week vs. Previous Week -----------------------------------------------------------------------
 # current_last_vol_mshs <- merge(vol_past_month, past_5_wks[,c("Appt.Year","Appt.WeekNum")],)
 current_last_vol_mshs <- vol_past_month %>%
-  filter(Appt.Year == todays_year) %>%
+  # filter(Appt.Year == todays_year) %>%
   filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum)) %>%
   group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
   summarise(weekly_vol = sum(weekly_vol)) %>%
@@ -2272,7 +2272,7 @@ current_last_vol_site <- function(site){
 
   # current_last_vol_site <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
   current_last_vol_site <-  vol_past_month %>%
-  filter(Appt.Year == todays_year) %>%
+  # filter(Appt.Year == todays_year) %>%
   filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum)) %>%
     filter(Campus == site) %>%
     group_by(Appt.Year, Appt.WeekNum, Visit.Method) %>%
