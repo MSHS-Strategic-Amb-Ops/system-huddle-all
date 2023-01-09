@@ -607,26 +607,27 @@ invisible(gc())
 
 ```{r Volume Metrics Data, echo = FALSE, warning = FALSE, message = FALSE}
 # Volume Data
-# vol_past_month <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-#   filter(Appt.WeekNum %in% unique(past_year$Appt.WeekNum)) %>%
-#   arrange(Appt.Year, Appt.WeekNum) %>%
-#   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method) %>%
-#   summarise(weekly_vol = n()) %>%
-#   pivot_wider(
-#     names_from = Visit.Method,
-#     values_from = weekly_vol,
-#     values_fill=list(weekly_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     6:8,
-#     names_to = "Visit.Method",
-#     values_to = "weekly_vol"
-#   ) %>%
-#   mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
-# invisible(gc())
+vol_past_month <- scheduling_data %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+  filter(Appt.WeekNum %in% unique(past_year$Appt.WeekNum)) %>%
+  arrange(Appt.Year, Appt.WeekNum) %>%
+  group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.WeekNum, Visit.Method) %>%
+  summarise(weekly_vol = n()) %>%
+  pivot_wider(
+    names_from = Visit.Method,
+    values_from = weekly_vol,
+    values_fill=list(weekly_vol=0)
+  ) %>%
+  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
+  pivot_longer(
+    6:8,
+    names_to = "Visit.Method",
+    values_to = "weekly_vol"
+  ) %>%
+  mutate(Appt.WeekNum = as.numeric(Appt.WeekNum))
+
+invisible(gc())
 
 ```
 
