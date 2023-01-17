@@ -252,6 +252,7 @@ inc_sites <- c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- 
 
 
 scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
+   mutate(Campus = ifelse(Campus == "MSDMG", "MSDD", Campus)) %>%
   filter(!is.na(Campus)) %>%
   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD"))
 
