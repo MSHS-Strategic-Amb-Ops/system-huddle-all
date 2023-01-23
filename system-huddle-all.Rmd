@@ -552,7 +552,6 @@ past_year <- weekNum_sunday %>%
 reporting_week <- paste0("from Sunday, ",todays_date, " to Saturday, ",todays_date+6)
 ```
 
-`r past_5_wks`
 
 ```{r Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
 # Scheduling Data
