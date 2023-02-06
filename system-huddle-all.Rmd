@@ -324,9 +324,9 @@ rad_onc_data_raw <- rad_onc_data_raw %>%
   mutate_at(c('MSBI', 'MSH.MSDFP', 'MSUS', 'MSW'), as.numeric) %>%
   mutate(Campus.Specialty = "Radiation Oncology",
          Department = "Radiation Oncology",
-         Appt.Year = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%Y"),
-         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%m")),
-         Appt.Month = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%b"),
+         Appt.Year = format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%Y"),
+         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%m")),
+         Appt.Month = format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%b"),
          Visit.Method = "IN PERSON") %>%
   dplyr::select(-Month) %>%
   pivot_longer(MSBI:MSW,
@@ -345,9 +345,9 @@ radiology_data_raw <- radiology_data_raw %>%
   summarise(monthly_vol = sum(monthly_vol)) %>%
   mutate(Campus.Specialty = "Radiology",
          Department = "Radiology",
-         Appt.Year = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%Y"),
-         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%m")),
-         Appt.Month = format(as.Date(as.yearmon(Month, "%y-%b"), format = "%b %y"),"%b"),
+         Appt.Year = format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%Y"),
+         Appt.MonNum = as.numeric(format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%m")),
+         Appt.Month = format(as.Date(as.yearmon(Month, "%b-%y"), format = "%b %y"),"%b"),
          Visit.Method = "IN PERSON") %>%
   dplyr::select(-Month) %>%
   arrange(Appt.Year, Appt.MonNum)
