@@ -1019,7 +1019,7 @@ new_vol_trending_downtown <- scheduling_data %>%
   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
   group_by(Campus, Appt.MonthYear, New.PT3) %>%
   summarise(total = n()) %>%
-  pivot_wider(names_from = New.PT2,
+  pivot_wider(names_from = New.PT3,
               values_from = total) %>%
   mutate(total_vol = New + Established,
          new_perc = round((New/(total_vol))*100,0))
