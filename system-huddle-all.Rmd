@@ -656,7 +656,7 @@ ________________________________________________________________________________
 ## Metrics Overview
 ### 1.Open Encounters Trending
 #### Epic Encounters Closed within 7 Days
-```{r Open Encounters Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+```{r Open Encounters Metric Trending by Site 1, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 site_cols <- c("#212070","#d80b8c","#00aeef","#7f7f7f","#ffc000","#7030a0","#c7c6ef","#fcc9e9","#c9f0ff","#dddedd")
 
 # Import in exclusion criteria
@@ -685,6 +685,11 @@ missing_chg_data_trend_data <- scheduling_data %>%
   filter(visit_exclude == "NO") 
   # filter(enc.status == "CLOSED") %>%
 
+# missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
+```
+
+
+```{r Open Encounters Metric Trending by Site 2, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 missing_chg_data_trend <- missing_chg_data_trend_data %>%
   group_by(Campus, Appt.MonthYear, enc.status, clo.7days) %>%
   summarise(total = n()) %>%
@@ -695,6 +700,12 @@ missing_chg_data_trend <- missing_chg_data_trend_data %>%
               values_fill = 0) %>%
   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
   filter(enc.status == "CLOSED")
+
+# missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
+```
+
+
+```{r Open Encounters Metric Trending by Site 3, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 
 missing_chg_data_trend_5days <- missing_chg_data_trend_data %>%
   group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
