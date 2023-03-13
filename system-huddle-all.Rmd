@@ -615,12 +615,12 @@ invisible(gc())
 
 ```{r Primary Care Time to Appointment Data, echo = FALSE, warning = FALSE, message = FALSE}
 # Time to Appointment
-time_to_appt_all <- scheduling_data %>%
-  filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
-  filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
-  filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
-  filter(Wait.Time >= 0) %>%
-  mutate(Wait.Time = as.numeric(Wait.Time))
+# time_to_appt_all <- scheduling_data %>%
+#   filter(Appt.Made.Year %in% unique(past_4_wks$Appt.Year)) %>%
+#   filter(Appt.Made.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time))
 
 ```
 
