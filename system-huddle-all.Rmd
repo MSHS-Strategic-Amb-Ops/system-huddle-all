@@ -682,7 +682,7 @@ missing_chg_data_trend_data <- scheduling_data %>%
   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
                                          ,TRUE ~ "NO")) %>%
-  filter(visit_exclude == "NO") %>%
+  filter(visit_exclude == "NO") 
   # filter(enc.status == "CLOSED") %>%
 
 missing_chg_data_trend <- missing_chg_data_trend_data %>%
