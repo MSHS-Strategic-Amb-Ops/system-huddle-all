@@ -714,38 +714,7 @@ missing_chg_data_trend <- scheduling_data %>%
   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
   filter(enc.status == "CLOSED")
 
-# missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
-```
-
-
-```{r Open Encounters Metric Trending by Site 3, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
-
-missing_chg_data_trend_5days <- scheduling_data %>%
-  filter(Appt.Year %in% c(2023,2022)) %>%
-  # filter(Appt.Year == 2022) %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Resource == "Provider") %>%
-  filter(Appt.DateYear <= missing_chg_cutOff) %>%
-   mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
-  # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
-  filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
-  filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
-  mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
-                                         ,TRUE ~ "NO")) %>%
-  filter(visit_exclude == "NO") %>%
-  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
-  summarise(total = n()) %>%
-   group_by(Campus, Appt.MonthYear) %>%
-  mutate(total.enc = sum(total)) %>%
-  pivot_wider(names_from = clo.5days,
-              values_from = total,
-              values_fill = 0) %>%
-  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
-  filter(enc.status == "CLOSED")
-
-# rm(missing_chg_data_trend_data)
 invisible(gc())
-
 # missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
 ```
 
@@ -863,6 +832,38 @@ invisible(gc())
 
 
 #### Epic Encounters Closed within 5 Days
+```{r Open Encounters Metric Trending by Site 3, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+
+missing_chg_data_trend_5days <- scheduling_data %>%
+  filter(Appt.Year %in% c(2023,2022)) %>%
+  # filter(Appt.Year == 2022) %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Resource == "Provider") %>%
+  filter(Appt.DateYear <= missing_chg_cutOff) %>%
+   mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
+  # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
+  filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+  filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+  mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+                                         ,TRUE ~ "NO")) %>%
+  filter(visit_exclude == "NO") %>%
+  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
+  summarise(total = n()) %>%
+   group_by(Campus, Appt.MonthYear) %>%
+  mutate(total.enc = sum(total)) %>%
+  pivot_wider(names_from = clo.5days,
+              values_from = total,
+              values_fill = 0) %>%
+  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
+  filter(enc.status == "CLOSED")
+
+# rm(missing_chg_data_trend_data)
+invisible(gc())
+
+# missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
+```
+
+
 ```{r Open Encounters (5 Days) Metric Trending by Site Output, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 # Total Encounters and % Closed within 7 Days by Site
 map(unique(missing_chg_data_trend_5days$Campus), function(x){
