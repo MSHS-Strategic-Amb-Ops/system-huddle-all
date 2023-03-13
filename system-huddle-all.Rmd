@@ -655,7 +655,7 @@ ________________________________________________________________________________
 
 ## Metrics Overview
 ### 1.Open Encounters Trending
-
+#### Epic Encounters Closed within 7 Days
 ```{r Open Encounters Metric Trending by Site, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 site_cols <- c("#212070","#d80b8c","#00aeef","#7f7f7f","#ffc000","#7030a0","#c7c6ef","#fcc9e9","#c9f0ff","#dddedd")
 
@@ -669,13 +669,14 @@ missing_exc_visitType <- read_excel("/nfs/data/Applications/Ambulatory/open_enco
 
 # Based on Metric % Encounters Closed within 7 days
 # Missing Charges Trending by Site
-missing_chg_data_trend <- scheduling_data %>%
+missing_chg_data_trend_data <- scheduling_data %>%
   filter(Appt.Year %in% c(2023,2022)) %>%
   # filter(Appt.Year == 2022) %>%
   filter(Appt.Status == "Arrived") %>%
   filter(Resource == "Provider") %>%
   filter(Appt.DateYear <= missing_chg_cutOff) %>%
-   mutate(clo.7days = case_when(open.days <= 7 ~ 'YES', TRUE ~ 'NO')) %>%
+   mutate(clo.7days = case_when(open.days <= 7 ~ 'YES', TRUE ~ 'NO'),
+          clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
   # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
@@ -683,6 +684,8 @@ missing_chg_data_trend <- scheduling_data %>%
                                          ,TRUE ~ "NO")) %>%
   filter(visit_exclude == "NO") %>%
   # filter(enc.status == "CLOSED") %>%
+
+missing_chg_data_trend <- missing_chg_data_trend_data %>%
   group_by(Campus, Appt.MonthYear, enc.status, clo.7days) %>%
   summarise(total = n()) %>%
    group_by(Campus, Appt.MonthYear) %>%
@@ -693,6 +696,18 @@ missing_chg_data_trend <- scheduling_data %>%
   mutate(clo.7days.perc = round((YES/(total.enc))*100,0)) %>%
   filter(enc.status == "CLOSED")
 
+missing_chg_data_trend_5days <- missing_chg_data_trend_data %>%
+  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
+  summarise(total = n()) %>%
+   group_by(Campus, Appt.MonthYear) %>%
+  mutate(total.enc = sum(total)) %>%
+  pivot_wider(names_from = clo.5days,
+              values_from = total,
+              values_fill = 0) %>%
+  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
+  filter(enc.status == "CLOSED")
+
+rm(missing_chg_data_trend_data)
 invisible(gc())
 
 # missing_chg_data_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend.rds")) 
@@ -809,6 +824,120 @@ rm(missing_chg_data_trend)
 rm(missing_chg_data_trend_downtown)
 invisible(gc())
 ```
+
+
+#### Epic Encounters Closed within 5 Days
+```{r Open Encounters (5 Days) Metric Trending by Site Output, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+# Total Encounters and % Closed within 7 Days by Site
+map(unique(missing_chg_data_trend_5days$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Encounters"), lineWidth = 3),
+    list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = (missing_chg_data_trend_5days %>% filter(Campus == x))$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Encounters",
+                data = (missing_chg_data_trend_5days %>% filter(Campus == x))$total.enc,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Encounters Closed <=5 Days",
+                data = (missing_chg_data_trend_5days %>% filter(Campus == x))$clo.5days.perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % Encounters Closed <=5 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Excludes Radiology and Rad Onc visits <br>",
+                            "Includes Epic provider visits only <br>",
+                            "Based on visits from ",date_start," to ",missing_chg_cutOff),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
+
+invisible(gc())
+
+```
+
+--------------------------------------------------------------------------------
+```{r Open Encounters (5 Days) Metric Trending Summarized, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
+
+missing_chg_data_trend_5days_downtown <- scheduling_data %>%
+  filter(Appt.Year %in% c(2023,2022)) %>%
+   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+  filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+  filter(Appt.Status == "Arrived") %>%
+  filter(Resource == "Provider") %>%
+  mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+                                         ,TRUE ~ "NO")) %>%
+  filter(visit_exclude == "NO") %>%
+  filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
+  mutate(Campus = "MS Downtown") %>%
+  filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+  # filter(Appt.DateYear <= missing_chg_cutOff) %>%
+  # filter(enc.status == "CLOSED") %>%
+  mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
+  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
+  summarise(total = n()) %>%
+   group_by(Campus, Appt.MonthYear) %>%
+  mutate(total.enc = sum(total)) %>%
+  pivot_wider(names_from = clo.5days,
+              values_from = total,
+              values_fill = 0) %>%
+  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
+  filter(enc.status == "CLOSED")
+
+# missing_chg_data_trend_5days_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_5days_downtown.rds")) 
+
+invisible(gc())
+
+# Based on Metric % Encounteres Closed <=7 days
+map(unique(missing_chg_data_trend_5days_downtown$Campus), function(x){
+highchart() %>%
+  hc_yAxis_multiples(
+    list(title = list(text = "Total Encounters"), lineWidth = 3),
+    list(title = list(text = "% of Encounters"), showLastLabel = FALSE, opposite = TRUE)
+  ) %>%
+  hc_xAxis(title = list(text = ""),
+           categories = missing_chg_data_trend_5days_downtown$Appt.MonthYear,
+           type = "datetime",
+           labels = list(format = '{value:%m/%d}')
+           # dateTimeLabelFormats = list(month = '%Y-%m')
+           ) %>%
+  hc_add_series(name = "Total Encounters",
+                data = (missing_chg_data_trend_5days_downtown %>% filter(Campus == x))$total.enc,
+                type = 'column',
+                color='#212070',
+                dataLabels = list(enabled = TRUE, format='{point.y}')) %>%
+  hc_add_series(name = "% Encounters Closed <=5 Days",
+                data = (missing_chg_data_trend_5days_downtown %>% filter(Campus == x))$clo.5days.perc,
+                type = "line", yAxis = 1,
+                color='#d80b8c',
+                lineColor='#d80b8c',
+                dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
+  hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
+  hc_title(text = paste0(x, " - % Encounters Closed <=5 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
+  hc_subtitle(text = paste0("Includes MSUS, MSDMG, and MSBI <br>",
+                            "Includes Epic provider visits only <br>",
+                            "Excludes Radiology and Rad Onc visits <br>", "Based on visits from ",date_start," to ",missing_chg_cutOff),
+              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  hc_tooltip(shared = TRUE, borderColor = "black")
+}) %>%
+  hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
+
+
+rm(missing_chg_data_trend_5days)
+rm(missing_chg_data_trend_5days_downtown)
+invisible(gc())
+```
+
 
 ### 2. Visit Volume Variance Trending
 ```{r Volume Variance to 2019 Metric Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
