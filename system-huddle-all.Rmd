@@ -788,6 +788,7 @@ missing_chg_data_trend_downtown <- scheduling_data %>%
 
 # missing_chg_data_trend_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_downtown.rds")) 
 
+rm(missing_chg_data_trend)
 invisible(gc())
 
 # Based on Metric % Encounteres Closed <=7 days
@@ -825,7 +826,7 @@ highchart() %>%
   hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
 
 
-rm(missing_chg_data_trend)
+
 rm(missing_chg_data_trend_downtown)
 invisible(gc())
 ```
@@ -899,6 +900,7 @@ highchart() %>%
 }) %>%
   hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
 
+rm(missing_chg_data_trend_5days)
 invisible(gc())
 
 ```
@@ -970,7 +972,6 @@ highchart() %>%
   hw_grid(ncol = 2, rowheight = 450) %>% htmltools::browsable()
 
 
-rm(missing_chg_data_trend_5days)
 rm(missing_chg_data_trend_5days_downtown)
 invisible(gc())
 ```
