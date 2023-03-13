@@ -1728,18 +1728,18 @@ invisible(gc())
 
 ### 3. MSHS Time to Appointment
 ```{r MSHS Time to Appointment Metrics by Site, echo = FALSE, warning = FALSE, message = FALSE}
-time_to_appt_all <- scheduling_data %>%
-  filter(Campus != "MSBI") %>%
-  filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
-  # filter(New.PT2 == "New") %>%
-  # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
-  #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
-  # filter(Appt.Made.Year >= 2022) %>%
-  filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
-  filter(Wait.Time >= 0) %>%
-  mutate(Wait.Time = as.numeric(Wait.Time))
+# time_to_appt_all <- scheduling_data %>%
+#   filter(Campus != "MSBI") %>%
+#   filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+#   # filter(New.PT2 == "New") %>%
+#   # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+#   #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+#   # filter(Appt.Made.Year >= 2022) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time))
 
-# time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
+time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
 
 # Time to Appointment by Visit Method and Patient Type ---------------------------------------------
 current_last_wait_mshs_all_all <- time_to_appt_all %>%
