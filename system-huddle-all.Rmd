@@ -412,7 +412,7 @@ hh_data_comp <- bind_rows(hh_data_comp, hh_data_comp_pt_entry)
 hh_data_merged <- hh_data_comp %>%
   filter(!site %in% c("MS NOW", "MSHP", "NYEE", "MSQ","OTHER","MSB")) %>%
   filter(!is.na(site)) %>%
-  select(site, unit, date, worker___1, worker___2, worker___3, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
+  dplyr::select(site, unit, date, worker___1, worker___2, worker___3, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
   mutate(across(4:12, as.numeric)) %>%
   mutate_if(is.numeric, ~ifelse(is.na(.),0,.)) %>%
   mutate_if(is.numeric, ~ifelse(.==2,0,.)) %>%
@@ -432,7 +432,7 @@ hh_data_merged <- hh_data_comp %>%
 hh_data_merged_role <- hh_data_comp %>%
   filter(!site %in% c("MS NOW", "MSHP", "NYEE", "MSQ","OTHER")) %>%
   filter(!is.na(site)) %>%
-  select(site, unit, date, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
+  dplyr::select(site, unit, date, provider_hands_bef, provider_hands_aft, nurse_hands_bef, nurse_hands_aft, mt_hands_bef, mt_hands_aft) %>%
   pivot_longer(provider_hands_bef: mt_hands_aft,
                names_to = "role",
                values_to = "compliance") %>%
@@ -1620,21 +1620,22 @@ current_last_vol_mshs <- vol_past_month %>%
   group_by(Visit.Method) %>%
   mutate(prev_week = shift(weekly_vol)) %>%
   mutate(perc_diff = percent((weekly_vol - prev_week)/prev_week,1)) %>%
-  filter(!is.na(prev_week))
+  filter(!is.na(prev_week)) %>%
+  filter(Appt.Year == 2023)
 current_last_vol_mshs <- merge(current_last_vol_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_vol_mshs <- current_last_vol_mshs %>%
   arrange(Appt.WeekNum) %>%
-  select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+  dplyr::select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
 
 current_last_vol_mshs_total <- current_last_vol_mshs %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_mshs_person <- current_last_vol_mshs %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_mshs_tele <- current_last_vol_mshs %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_mshs_all <- merge(current_last_vol_mshs_total, current_last_vol_mshs_person, by = "Appt.DateYear")
 current_last_vol_mshs_all <- merge(current_last_vol_mshs_all, current_last_vol_mshs_tele, by = "Appt.DateYear")
 diff_formatter <- formatter("span",
@@ -1650,7 +1651,7 @@ header_above_2 <- c("title" = length(current_last_vol_mshs_all))
 names(header_above_2) <- paste0("Arrived visits from ",
                               min(past_5_wks$Appt.DateYear)," to ",date_end)
 current_last_vol_mshs_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
@@ -1686,17 +1687,17 @@ current_same_vol_mshs <- merge(current_same_vol_mshs, weekNum_sunday[,c("Appt.Ye
                                all.x = TRUE)
 current_same_vol_mshs <- current_same_vol_mshs %>%
   arrange(Appt.WeekNum) %>%
-  select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+  dplyr::select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
 
 current_same_vol_mshs_total <- current_same_vol_mshs %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_mshs_person <- current_same_vol_mshs %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_mshs_tele <- current_same_vol_mshs %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_mshs_all <- merge(current_same_vol_mshs_total, current_same_vol_mshs_person, by = "Appt.DateYear")
 current_same_vol_mshs_all <- merge(current_same_vol_mshs_all, current_same_vol_mshs_tele, by = "Appt.DateYear")
 current_same_vol_mshs_all$perc_diff.x <- diff_formatter(current_same_vol_mshs_all$perc_diff.x)
@@ -1706,7 +1707,7 @@ col_names <- c("Week of", rep(c("Prior Week","Same Week Last Year","% Difference
 header_above_2 <- c("title" = length(current_same_vol_mshs_all))
 names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
 current_same_vol_mshs_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
@@ -1825,7 +1826,7 @@ current_last_wait_mshs_combined <- current_last_wait_mshs_combined%>%
          Appt.WeekNum = Appt.Made.WeekNum)
 current_last_wait_mshs_combined <- merge(current_last_wait_mshs_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_wait_mshs_combined <- current_last_wait_mshs_combined %>%
-  select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
+  dplyr::select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
   arrange(Appt.DateYear, New.PT2) %>%
   arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
 current_last_wait_mshs_combined <- current_last_wait_mshs_combined %>%
@@ -1872,7 +1873,7 @@ col_names <- c("Week of", rep(c("All","Established","New"),3))
 header_above_2 <- c("title" = length(current_last_wait_mshs_combined))
 names(header_above_2) <- paste0("Scheduled visits from ", date_start, " to ", date_end)
 current_last_wait_mshs_combined %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   mutate_if(is.numeric, round, digits = 0) %>%
   kable(escape = F, align = c("c",rep("l",9)),
         col.names = col_names) %>%
@@ -2017,20 +2018,20 @@ invisible(gc())
 #
 # current_last_noShow_mshs <- current_last_noShow_mshs %>%
 #   arrange(Appt.WeekNum) %>%
-#   select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
+#   dplyr::select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
 #
 #
 # current_last_noShow_mshs_total <- current_last_noShow_mshs %>%
 #   filter(Visit.Method == "Total") %>%
-#   select(-Visit.Method)
+#   dplyr::select(-Visit.Method)
 #
 # current_last_noShow_mshs_person <- current_last_noShow_mshs %>%
 #   filter(Visit.Method == "IN PERSON") %>%
-#   select(-Visit.Method)
+#   dplyr::select(-Visit.Method)
 #
 # current_last_noShow_mshs_tele <- current_last_noShow_mshs %>%
 #   filter(Visit.Method == "TELEHEALTH") %>%
-#   select(-Visit.Method)
+#   dplyr::select(-Visit.Method)
 #
 # current_last_noShow_mshs_all <- merge(current_last_noShow_mshs_total, current_last_noShow_mshs_person, by = "Appt.DateYear")
 # current_last_noShow_mshs_all <- merge(current_last_noShow_mshs_all, current_last_noShow_mshs_tele, by = "Appt.DateYear")
@@ -2043,7 +2044,7 @@ invisible(gc())
 #                               min(past_4_wks$Appt.DateYear)," to ",max(scheduling_data$Appt.DateYear))
 #
 # current_last_noShow_mshs_all %>%
-#   select(everything()) %>%
+#   dplyr::select(everything()) %>%
 #   mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
 #          noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
 #          noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
@@ -2090,7 +2091,7 @@ hh_mshs <- bind_rows(hh_mshs_role, hh_mshs_all)
 hh_mshs <- merge(hh_mshs, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 hh_mshs <- hh_mshs %>%
   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
-  select(Appt.DateYear, role, perc_comp, total_obs)
+  dplyr::select(Appt.DateYear, role, perc_comp, total_obs)
 hh_mshs <- hh_mshs %>%
   pivot_wider(names_from = role,
               values_from = c("total_obs","perc_comp")) %>%
@@ -2184,7 +2185,7 @@ missing_chg_ytd_site <- missing_chg_ytd_site %>%
          closed.5days.perc = percent(clo.5days/total.count,0),
          open.3days.perc = percent(open.3days/open.count,0),
          open.5days.perc = percent(open.5days/open.count,0)) %>%
-  dplyr::select(Campus, total.count, closed.3days.perc, closed.5days.perc, open.count, enc.open.time, open.3days.perc, open.5days.perc)
+  dplyr::dplyr::select(Campus, total.count, closed.3days.perc, closed.5days.perc, open.count, enc.open.time, open.3days.perc, open.5days.perc)
 col_names <- c("Site",paste0(todays_year," YTD Total Encounters"), "% of Encounters Closed <=3 Days", "% of Encounters Closed <=5 Days",
                paste0(todays_year, " YTD Open Encounters"), "Median Open Encounter Time",
                "% of Open Encounters >3 Days", "% of Open Encounters >5 Days")
@@ -2194,7 +2195,7 @@ header_above_2 <- c("title" = length(missing_chg_ytd_site))
 names(header_above_2) <- paste0("Opened Encounters from ",
                               min(missing_ytd_data$Appt.DateYear)," to ",missing_chg_cutOff)
 missing_chg_ytd_site %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
     # mutate(open.perc = color_tile("lightpink","red")(open.perc),
     #      open.3days.perc = color_tile("lightpink","red")(open.3days.perc),
     #      open.5days.perc = color_tile("lightpink","red")(open.5days.perc)) %>%
@@ -2304,7 +2305,7 @@ missing_chg_ytd_dept %>%
 ```{r Site Volume Metrics Functions, echo = FALSE, warning = FALSE, message = FALSE}
 # Prior Week vs. Previous Week by Site Function
 current_last_vol_site <- function(site){
-  # site <- "MSUS"
+  site <- "MSUS"
 
   # current_last_vol_site <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
   current_last_vol_site <-  vol_past_month %>%
@@ -2318,21 +2319,22 @@ current_last_vol_site <- function(site){
     group_by(Visit.Method) %>%
     mutate(prev_week = shift(weekly_vol)) %>%
     mutate(perc_diff = percent((weekly_vol - prev_week)/prev_week,0)) %>%
-    filter(!is.na(prev_week))
+    filter(!is.na(prev_week)) %>%
+    filter(Appt.Year == 2023)
 current_last_vol_site <- merge(current_last_vol_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_vol_site <- current_last_vol_site %>%
   arrange(Appt.WeekNum) %>%
-  select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+  dplyr::select(Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
 
 current_last_vol_site_total <- current_last_vol_site %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_site_person <- current_last_vol_site %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_site_tele <- current_last_vol_site %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_site_all <- merge(current_last_vol_site_total, current_last_vol_site_person, by = "Appt.DateYear")
 current_last_vol_site_all <- merge(current_last_vol_site_all, current_last_vol_site_tele, by = "Appt.DateYear")
 diff_formatter <- formatter("span",
@@ -2350,7 +2352,7 @@ header_above_2 <- c("title" = length(current_last_vol_site_all))
 names(header_above_2) <- paste0("Arrived visits from ",
                               min(past_5_wks$Appt.DateYear)," to ",date_end)
 current_last_vol_site_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
@@ -2388,17 +2390,17 @@ current_same_vol_site <- current_same_vol_site %>%
 current_same_vol_site <- merge(current_same_vol_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_same_vol_site <- current_same_vol_site %>%
   arrange(Appt.WeekNum) %>%
-  select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+  dplyr::select(Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
 
 current_same_vol_site_total <- current_same_vol_site %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_site_person <- current_same_vol_site %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_site_tele <- current_same_vol_site %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_site_all <- merge(current_same_vol_site_total, current_same_vol_site_person, by = "Appt.DateYear")
 current_same_vol_site_all <- merge(current_same_vol_site_all, current_same_vol_site_tele, by = "Appt.DateYear")
 diff_formatter <- formatter("span",
@@ -2415,7 +2417,7 @@ names(header_above) <- paste0(site, " Prior Week vs. Same Week Last Year Volume 
 header_above_2 <- c("title" = length(current_same_vol_site_all))
 names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
 current_same_vol_site_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
@@ -2453,17 +2455,17 @@ current_last_vol_dept <- function(site){
 current_last_vol_dept <- merge(current_last_vol_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_vol_dept <- current_last_vol_dept %>%
   arrange(Appt.WeekNum) %>%
-  select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
+  dplyr::select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, prev_week, perc_diff)
 
 current_last_vol_dept_total <- current_last_vol_dept %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_dept_person <- current_last_vol_dept %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_dept_tele <- current_last_vol_dept %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_vol_dept_all <- merge(current_last_vol_dept_total, current_last_vol_dept_person, by = c("Campus.Specialty","Appt.DateYear"))
 current_last_vol_dept_all <- merge(current_last_vol_dept_all, current_last_vol_dept_tele, by = c("Campus.Specialty","Appt.DateYear"))
 current_last_vol_dept_all[is.na(current_last_vol_dept_all)] <- 0
@@ -2482,7 +2484,7 @@ header_above_2 <- c("title" = length(current_last_vol_dept_all))
 names(header_above_2) <- paste0("Arrived visits from ",
                               min(past_5_wks$Appt.DateYear)," to ",date_end)
 current_last_vol_dept_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
@@ -2520,17 +2522,17 @@ current_same_vol_dept <- current_same_vol_dept %>%
 current_same_vol_dept <- merge(current_same_vol_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_same_vol_dept <- current_same_vol_dept %>%
   arrange(Appt.WeekNum) %>%
-  select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
+  dplyr::select(Campus.Specialty, Appt.DateYear, Visit.Method, weekly_vol, last_year, perc_diff)
 
 current_same_vol_dept_total <- current_same_vol_dept %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_dept_person <- current_same_vol_dept %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_dept_tele <- current_same_vol_dept %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_same_vol_dept_all <- merge(current_same_vol_dept_total, current_same_vol_dept_person, by = c("Campus.Specialty","Appt.DateYear"))
 current_same_vol_dept_all <- merge(current_same_vol_dept_all, current_same_vol_dept_tele, by = c("Campus.Specialty","Appt.DateYear"))
 current_same_vol_dept_all[is.na(current_same_vol_dept_all)] <- 0
@@ -2548,7 +2550,7 @@ names(header_above) <- paste0(site, " Prior Week vs. Same Week Last Year Volume 
 header_above_2 <- c("title" = length(current_same_vol_dept_all))
 names(header_above_2) <- paste0("Arrived visits up to ", strftime(date_end, format = "%A"), ", ",date_end)
 current_same_vol_dept_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
@@ -2683,7 +2685,7 @@ current_last_wait_site_tele <- current_last_wait_site_tele %>%
 current_last_wait_site_combined <- bind_rows(current_last_wait_site_all, current_last_wait_site_inPerson, current_last_wait_site_tele)
 current_last_wait_site_combined <- merge(current_last_wait_site_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_wait_site_combined <- current_last_wait_site_combined %>%
-  select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
+  dplyr::select(Appt.DateYear, Visit.Method, New.PT2, days) %>%
   arrange(Appt.DateYear, New.PT2) %>%
   arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
 current_last_wait_site_combined <- current_last_wait_site_combined %>%
@@ -2719,7 +2721,7 @@ header_above_2 <- c("title" = length(current_last_wait_site_combined))
 names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.DateYear), " to ",
                                                             strftime(max(time_to_appt_all$Appt.DateYear), format = "%A"), ", ",max(time_to_appt_all$Appt.DateYear))
 current_last_wait_site_combined %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   kable(escape = F, align = c("c",rep("l",9)),
         col.names = col_names) %>%
   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
@@ -2912,7 +2914,7 @@ current_last_wait_dept_tele$Visit.Method <- "TELEHEALTH"
 current_last_wait_dept_combined <- bind_rows(current_last_wait_dept_all, current_last_wait_dept_inPerson, current_last_wait_dept_tele)
 current_last_wait_dept_combined <- merge(current_last_wait_dept_combined, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_wait_dept_combined <- current_last_wait_dept_combined %>%
-  select(Department, Visit.Method, New.PT2, days) %>%
+  dplyr::select(Department, Visit.Method, New.PT2, days) %>%
   arrange(Department) %>%
   arrange(factor(Visit.Method, levels = c("Total","IN PERSON","TELEHEALTH")))
 current_last_wait_dept_combined <- current_last_wait_dept_combined %>%
@@ -2932,7 +2934,7 @@ header_above_2 <- c("title" = length(current_last_wait_dept_combined))
 names(header_above_2) <- paste0("Scheduled visits from ", min(time_to_appt_all$Appt.DateYear), " to ",
                                                             strftime(max(time_to_appt_all$Appt.DateYear), format = "%A"), ", ",max(time_to_appt_all$Appt.DateYear))
 current_last_wait_dept_combined %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   kable(escape = F, align = c("r",rep("c",9)),
         col.names = col_names) %>%
   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center",
@@ -2990,17 +2992,17 @@ current_last_noShow_site <- current_last_noShow_site %>%
 current_last_noShow_site <- merge(current_last_noShow_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_noShow_site <- current_last_noShow_site %>%
   arrange(Appt.WeekNum) %>%
-  select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
+  dplyr::select(Appt.DateYear, Visit.Method, Arrived, `No Show`, noShow_rate)
 
 current_last_noShow_site_total <- current_last_noShow_site %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_site_person <- current_last_noShow_site %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_site_tele <- current_last_noShow_site %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_site_all <- merge(current_last_noShow_site_total, current_last_noShow_site_person, by = "Appt.DateYear")
 current_last_noShow_site_all <- merge(current_last_noShow_site_all, current_last_noShow_site_tele, by = "Appt.DateYear")
 col_names <- c("Week of", rep(c("Arrived Volume","No Show Volume","No Show Rate"),3))
@@ -3010,7 +3012,7 @@ header_above_2 <- c("title" = length(current_last_noShow_site_all))
 names(header_above_2) <- paste0("Arrived visits from ",
                               min(past_4_wks$Appt.DateYear)," to ",date_end)
 current_last_noShow_site_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
     mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
          noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
          noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
@@ -3070,17 +3072,17 @@ current_last_noShow_dept <- current_last_noShow_dept %>%
 # current_last_noShow_dept <- merge(current_last_noShow_dept, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 current_last_noShow_dept <- current_last_noShow_dept %>%
   # arrange(Appt.WeekNum) %>%
-  select(Campus.Specialty, Department, Visit.Method, Arrived, `No Show`, noShow_rate)
+  dplyr::select(Campus.Specialty, Department, Visit.Method, Arrived, `No Show`, noShow_rate)
 
 current_last_noShow_dept_total <- current_last_noShow_dept %>%
   filter(Visit.Method == "Total") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_dept_person <- current_last_noShow_dept %>%
   filter(Visit.Method == "IN PERSON") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_dept_tele <- current_last_noShow_dept %>%
   filter(Visit.Method == "TELEHEALTH") %>%
-  select(-Visit.Method)
+  dplyr::select(-Visit.Method)
 current_last_noShow_dept_all <- merge(current_last_noShow_dept_total, current_last_noShow_dept_person, by = c("Campus.Specialty","Department"))
 current_last_noShow_dept_all <- merge(current_last_noShow_dept_all, current_last_noShow_dept_tele, by = c("Campus.Specialty","Department"))
 current_last_noShow_dept_all <- current_last_noShow_dept_all %>%
@@ -3093,7 +3095,7 @@ header_above_2 <- c("title" = length(current_last_noShow_dept_all))
 names(header_above_2) <- paste0("Arrived visits from ",
                               min(past_4_wks$Appt.DateYear)," to ",date_end)
 current_last_noShow_dept_all %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
     mutate(noShow_rate.x = color_tile("lightpink","red")(noShow_rate.x),
          noShow_rate.y = color_tile("lightpink","red")(noShow_rate.y),
          noShow_rate = color_tile("lightpink","red")(noShow_rate)) %>%
@@ -3142,11 +3144,11 @@ hh_site <- bind_rows(hh_site_role, hh_site_all)
 hh_site <- merge(hh_site, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.DateYear")])
 hh_site <- hh_site %>%
   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
-  select(Appt.DateYear, role, perc_comp, total_obs)
+  dplyr::select(Appt.DateYear, role, perc_comp, total_obs)
 hh_site_final <- hh_site %>%
   pivot_wider(names_from = role,
               values_from = c("total_obs","perc_comp"))
-  # dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
+  # dplyr::dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
   #               total_obs_provider_hands_bef, perc_comp_provider_hands_bef, total_obs_provider_hands_aft, perc_comp_provider_hands_aft,
   #               total_obs_nurse_hands_bef, perc_comp_nurse_hands_bef, total_obs_nurse_hands_aft, perc_comp_nurse_hands_aft,
   #               total_obs_mt_hands_bef, perc_comp_mt_hands_bef, total_obs_mt_hands_aft, perc_comp_mt_hands_aft)
@@ -3178,7 +3180,7 @@ header_above_2 <- c("title" = length(hh_site_final))
 names(header_above_2) <- paste0("Data Entered from ",
                               min(past_4_wks$Appt.DateYear)," to ",max(hh_data_merged$date, na.rm = T))
 hh_site_final %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
   # mutate_if(str_detect("%"), function(x) {
   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
@@ -3228,7 +3230,7 @@ hh_site_final %>%
 #
 # hh_site_role <- hh_site %>%
 #   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
-#   select(Appt.DateYear, role, perc_comp, total_obs, order)
+#   dplyr::select(Appt.DateYear, role, perc_comp, total_obs, order)
 #
 # hh_site_all <- hh_site %>%
 #   group_by(Appt.DateYear, order) %>%
@@ -3236,39 +3238,39 @@ hh_site_final %>%
 #             Yes = sum(Yes)) %>%
 #   mutate(perc_comp =percent(Yes/total_obs,0),
 #          role = "All") %>%
-#   select(Appt.DateYear, order, perc_comp, total_obs) %>%
+#   dplyr::select(Appt.DateYear, order, perc_comp, total_obs) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 # hh_site_prov <- hh_site_role %>%
 #   filter(grepl("provider",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(Appt.DateYear, order) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 #
 # hh_site_nurse <- hh_site_role %>%
 #   filter(grepl("nurse",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(Appt.DateYear, order) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 # hh_site_mt <- hh_site_role %>%
 #   filter(grepl("mt",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(Appt.DateYear, order) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(Appt.DateYear, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 #
 # hh_site_final <- merge(hh_site_all, hh_site_prov, by = "Appt.DateYear")
@@ -3296,7 +3298,7 @@ hh_site_final %>%
 #                               min(past_4_wks$Appt.DateYear)," to ",max(hh_data_merged$date, na.rm = T))
 #
 # hh_site_final %>%
-#   select(everything()) %>%
+#   dplyr::select(everything()) %>%
 #   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
 #   # mutate_if(str_detect("%"), function(x) {
 #   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
@@ -3340,7 +3342,7 @@ hh_site_final %>%
 #
 # hh_dept_role <- hh_dept %>%
 #   mutate(perc_comp = percent(Yes/total_obs,0)) %>%
-#   select(unit, role, perc_comp, total_obs, order)
+#   dplyr::select(unit, role, perc_comp, total_obs, order)
 #
 # hh_dept_all <- hh_dept %>%
 #   group_by(unit, order) %>%
@@ -3348,34 +3350,34 @@ hh_site_final %>%
 #             Yes = sum(Yes)) %>%
 #   mutate(perc_comp =percent(Yes/total_obs,0),
 #          role = "All") %>%
-#   select(unit, order, perc_comp, total_obs) %>%
+#   dplyr::select(unit, order, perc_comp, total_obs) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 # hh_dept_prov <- hh_dept_role %>%
 #   filter(grepl("provider",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(unit, order) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 #
 # hh_dept_nurse <- hh_dept_role %>%
 #   filter(grepl("nurse",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(unit, order) %>%
 #   pivot_wider(
 #               names_from = order,
 #               values_from = c(perc_comp,total_obs)) %>%
-#   select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
+#   dplyr::select(unit, `perc_comp_a-bef`, `total_obs_a-bef`, `perc_comp_b-aft`, `total_obs_b-aft`)
 #
 # hh_dept_mt <- hh_dept_role %>%
 #   filter(grepl("mt",role,fixed = T) == TRUE) %>%
-#   select(-role) %>%
+#   dplyr::select(-role) %>%
 #   arrange(unit, order) %>%
 #   pivot_wider(
 #               names_from = order,
@@ -3408,7 +3410,7 @@ hh_site_final %>%
 #                               min(hh_dept$Appt.DateYear)," to ",max(hh_data_merged_role$date, na.rm = T))
 #
 # hh_dept_final %>%
-#   select(everything()) %>%
+#   dplyr::select(everything()) %>%
 #   mutate_if(is.numeric, prettyNum, big.mark = ',') %>%
 #   # mutate_if(str_detect("%"), function(x) {
 #   # cell_spec(color = ifelse(str_detect("-", "#ff3300", "#00b800")))})
@@ -3554,7 +3556,7 @@ metrics_def <- data.frame(Metric = c("% Encounters Closed",
                                          "TBD",
                                          "90%"))
 metrics_def %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   kable(escape = F, align = "l") %>%
   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
   add_header_above(c("Metric Definitions and Targets" = length(metrics_def)),
@@ -3567,7 +3569,7 @@ metrics_def %>%
 #### Departments Excluded
 ```{r Epic Open Encounters Departments, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
 missing_exc_dept %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   kable(escape = F, align = "l") %>%
   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
   add_header_above(c("Departments Excluded from Open Encounters Metric" = length(missing_exc_dept)),
@@ -3579,7 +3581,7 @@ missing_exc_dept %>%
 #### Resources Excluded
 ```{r Epic Open Encounters Resources, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
 missing_exc_resource %>%
-  select(everything()) %>%
+  dplyr::select(everything()) %>%
   kable(escape = F, align = "l") %>%
   kable_styling(bootstrap_options = "hover", full_width = FALSE, position = "center", row_label_position = "c", font_size = 14) %>%
   add_header_above(c("Resources Excluded from Open Encounters Metric" = length(missing_exc_resource)),
