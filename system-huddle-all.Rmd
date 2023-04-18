@@ -2185,7 +2185,7 @@ missing_chg_ytd_site <- missing_chg_ytd_site %>%
          closed.5days.perc = percent(clo.5days/total.count,0),
          open.3days.perc = percent(open.3days/open.count,0),
          open.5days.perc = percent(open.5days/open.count,0)) %>%
-  dplyr::dplyr::select(Campus, total.count, closed.3days.perc, closed.5days.perc, open.count, enc.open.time, open.3days.perc, open.5days.perc)
+  dplyr::select(Campus, total.count, closed.3days.perc, closed.5days.perc, open.count, enc.open.time, open.3days.perc, open.5days.perc)
 col_names <- c("Site",paste0(todays_year," YTD Total Encounters"), "% of Encounters Closed <=3 Days", "% of Encounters Closed <=5 Days",
                paste0(todays_year, " YTD Open Encounters"), "Median Open Encounter Time",
                "% of Open Encounters >3 Days", "% of Open Encounters >5 Days")
@@ -3148,7 +3148,7 @@ hh_site <- hh_site %>%
 hh_site_final <- hh_site %>%
   pivot_wider(names_from = role,
               values_from = c("total_obs","perc_comp"))
-  # dplyr::dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
+  # dplyr::select(Appt.DateYear, `total_obs_a-bef`, `perc_comp_a-bef`, `total_obs_b-aft`, `perc_comp_b-aft`,
   #               total_obs_provider_hands_bef, perc_comp_provider_hands_bef, total_obs_provider_hands_aft, perc_comp_provider_hands_aft,
   #               total_obs_nurse_hands_bef, perc_comp_nurse_hands_bef, total_obs_nurse_hands_aft, perc_comp_nurse_hands_aft,
   #               total_obs_mt_hands_bef, perc_comp_mt_hands_bef, total_obs_mt_hands_aft, perc_comp_mt_hands_aft)
