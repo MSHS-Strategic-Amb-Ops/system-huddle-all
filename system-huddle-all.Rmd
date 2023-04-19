@@ -2305,7 +2305,7 @@ missing_chg_ytd_dept %>%
 ```{r Site Volume Metrics Functions, echo = FALSE, warning = FALSE, message = FALSE}
 # Prior Week vs. Previous Week by Site Function
 current_last_vol_site <- function(site){
-  site <- "MSUS"
+  # site <- "MSUS"
 
   # current_last_vol_site <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
   current_last_vol_site <-  vol_past_month %>%
@@ -2439,7 +2439,7 @@ current_same_vol_site_all %>%
 ```{r Department Volume Metrics Functions, echo = FALSE, warning = FALSE, message = FALSE}
 # Prior Week vs. Previous Week by Site Function
 current_last_vol_dept <- function(site){
-  # site <- "MSUS"
+  # site <- "ONCOLOGY"
 
   current_last_vol_dept <- merge(past_5_wks[,c("Appt.Year","Appt.WeekNum")], vol_past_month)
   current_last_vol_dept <- current_last_vol_dept %>%
