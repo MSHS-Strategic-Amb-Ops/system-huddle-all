@@ -263,6 +263,8 @@ scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/
 
 date_start <- as.Date("2022-01-01", format="%Y-%m-%d")
 date_end <- as.Date(max(scheduling_data_raw$Appt.Made.DTTM), format="%Y-%m-%d")
+
+todays_year <- format(date_end, "%Y")
 # date_start <- as.Date(paste0(format(as.Date(date_end) - 365, "%Y-%m"),"-01"), format="%Y-%m-%d")
 ```
 
