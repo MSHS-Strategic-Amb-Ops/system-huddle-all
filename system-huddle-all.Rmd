@@ -248,13 +248,13 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 
 ```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
 '%!in%' <- function(x,y)!('%in%'(x,y))
-inc_sites <- c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")
+inc_sites <- c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")
 
 
 scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
    mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
   filter(!is.na(Campus)) %>%
-  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
+  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 
 # scheduling_data_raw <- as.data.frame(readRDS(file.choose())) %>%
 #   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
@@ -3441,7 +3441,7 @@ hh_site_final %>%
 
 ```{r Site Metrics Output, echo = FALSE, warning = FALSE, message = FALSE, results="asis"}
 # sites <- as.vector(unique(scheduling_data$Campus))
-sites <- as.vector(c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
+sites <- as.vector(c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 # missing_chg_sites <- as.vector(unique(missing_chg_data$Campus))
 primary_care_sites <- as.vector(unique((time_to_appt_all %>% filter(Appt.Year == todays_year))$Campus))
 # primary_care_depts <- as.vector(unique((time_to_appt_all %>% filter(Appt.WeekNum == todays_week))$Campus))
