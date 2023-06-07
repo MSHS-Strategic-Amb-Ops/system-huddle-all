@@ -251,10 +251,10 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 inc_sites <- c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")
 
 
-scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
-   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
-  filter(!is.na(Campus)) %>%
-  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
+# scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
+#    mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
+#   filter(!is.na(Campus)) %>%
+#   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 
 # scheduling_data_raw <- as.data.frame(readRDS(file.choose())) %>%
 #   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
@@ -303,14 +303,8 @@ hh_data_comp_raw_pt_entry <- as.data.frame(hh_data_comp_raw_pt_entry)
 #          unit_complete = as.numeric(unit_complete))
 
 
-
-# write.csv(hh_data_comp_raw, "/nfs/data/Applications/Ambulatory/hh_crosswalk.csv", row.names=FALSE)
-
-# hh_data_comp_raw_csv <-  as.data.frame(read_csv("/nfs/data/Applications/Ambulatory/hh_comp.csv"))
 hh_crosswalk <- as.data.frame(read_csv("/nfs/data/Applications/Ambulatory/hh_crosswalk.csv"))
-# hh_data_comp_raw_csv <-  as.data.frame(read_csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/hh_comp.csv"))
-# hh_crosswalk <- as.data.frame(read_csv("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload/hh_crosswalk.csv"))
-
+# hh_crosswalk <- as.data.frame(read_csv(file.choose()))
  
 ```
 
@@ -386,7 +380,6 @@ hh_data_comp <- hh_data_comp_raw %>%
   filter(date != "NULL") %>%
   mutate_if(is.numeric, as.character) %>%
   filter(!is.na(site))
-
 
 # Process patient entered data -------------------------------------------------
 colnames(hh_data_comp_raw_pt_entry) <- tolower(colnames(hh_data_comp_raw_pt_entry))
@@ -1284,7 +1277,7 @@ new_perc_trend <- scheduling_data %>%
   filter(Campus != "MSBI") %>%
   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
   # filter(Appt.Made.Year == 2023) %>%
-  filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.DateYear <= date_end) %>%
+  filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.Made.DateYear <= date_end) %>%
   # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
   filter(New.PT2 == "New") %>%
   # mutate(Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
@@ -1298,6 +1291,7 @@ new_perc_trend <- scheduling_data %>%
               values_fill = 0) %>%
   mutate(total = Yes + No,
          new_14days = round((Yes/(total))*100))
+
 
 map(unique(new_perc_trend$Campus), function(x){
 highchart() %>%
@@ -1325,8 +1319,8 @@ highchart() %>%
                 dataLabels = list(enabled = TRUE, format='{point.y}%')) %>%
   hc_legend(align = "left", verticalAlign = "top", itemStyle = list(fontFamily ='Calibri',color ='black', fontSize = "14px")) %>%
   hc_title(text = paste0(x, " - % New Patients Scheduled <=14 Days"), align = "left", style = list(fontWeight = 'bold', fontSize = "22px", fontFamily = "Calibri")) %>%
-  hc_subtitle(text = paste0("Based on visits from 2023-01-01"," to ",date_end),
-              align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
+  # hc_subtitle(text = paste0("Based on visits from 2023-01-01"," to ",date_end),
+  #             align = "left", style = list(fontFace = "italic", fontSize = "16px", fontFamily = "Calibri")) %>%
   hc_tooltip(shared = TRUE, borderColor = "black")
 }) %>%
   hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
@@ -1452,6 +1446,7 @@ hh_site <- hh_site %>%
   
   
 invisible(gc())
+
 ```
 
 
@@ -1747,6 +1742,7 @@ invisible(gc())
 #   mutate(Wait.Time = as.numeric(Wait.Time))
 
 time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
+# time_to_appt_all <- as.data.frame(readRDS(file.choose()))
 
 # Time to Appointment by Visit Method and Patient Type ---------------------------------------------
 current_last_wait_mshs_all_all <- time_to_appt_all %>%
