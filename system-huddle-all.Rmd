@@ -251,10 +251,10 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 inc_sites <- c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")
 
 
-# scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
-#    mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
-#   filter(!is.na(Campus)) %>%
-#   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
+scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
+   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
+  filter(!is.na(Campus)) %>%
+  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 
 # scheduling_data_raw <- as.data.frame(readRDS(file.choose())) %>%
 #   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
