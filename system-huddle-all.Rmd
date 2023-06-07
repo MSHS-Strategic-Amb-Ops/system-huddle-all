@@ -1372,7 +1372,7 @@ hh_site <- hh_data_merged %>%
 
 
 hh_site <- hh_site %>%
-  filter(unit != "NULL") %>%
+  filter(!is.na(unit)) %>%
   group_by(site, Month) %>%
   summarise(worker___1 = sum(worker___1),
             worker___2 = sum(worker___2),
@@ -1392,25 +1392,26 @@ hh_site <- hh_site %>%
                           max(mt_hands_bef, mt_hands_aft))/total_obs)*100)) %>%
   dplyr::select(site, Month, total_obs, total_comp)
 
-network <- data.frame(site = "NETWORK",
-                      Month = "2023-04",
-                      total_obs = 0,
-                      total_comp = 0)
+# network <- data.frame(site = "NETWORK",
+#                       Month = "2023-04",
+#                       total_obs = 0,
+#                       total_comp = 0)
+# 
+# msw <- data.frame(site = "MSW",
+#                       Month = "2023-05",
+#                       total_obs = 0,
+#                       total_comp = 0)
 
-msw <- data.frame(site = "MSW",
-                      Month = "2023-05",
-                      total_obs = 0,
-                      total_comp = 0)
-
-msdfp <- data.frame(site = "MSDFP",
-                      Month = "2023-04",
-                      total_obs = 0,
-                      total_comp = 0)
+# msdfp <- data.frame(site = "MSDFP",
+#                       Month = "2023-04",
+#                       total_obs = 0,
+#                       total_comp = 0)
 
 hh_site <- bind_rows(hh_site, network, msw, msdfp)
 
 hh_site <- hh_site %>%
   arrange(site, Month)
+
   map(unique(hh_site$site), function(x){
 
     highchart() %>%
