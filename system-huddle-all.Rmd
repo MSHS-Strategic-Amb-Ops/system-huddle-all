@@ -1407,7 +1407,7 @@ hh_site <- hh_site %>%
 #                       total_obs = 0,
 #                       total_comp = 0)
 
-hh_site <- bind_rows(hh_site, network, msw, msdfp)
+# hh_site <- bind_rows(hh_site, network, msw, msdfp)
 
 hh_site <- hh_site %>%
   arrange(site, Month)
