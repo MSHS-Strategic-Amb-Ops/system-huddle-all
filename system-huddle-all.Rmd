@@ -1301,7 +1301,7 @@ highchart() %>%
          showLastLabel = FALSE, opposite = TRUE)
   ) %>%
   hc_xAxis(title = list(text = ""),
-           categories = new_perc_trend$Appt.Made.MonthYear,
+           categories = (new_perc_trend %>% filter(Campus == x))$Appt.Made.MonthYear,
            type = "datetime",
            labels = list(format = '{value:%m/%d}')
            # dateTimeLabelFormats = list(month = '%Y-%m')
