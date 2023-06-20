@@ -82,10 +82,8 @@ h4 {
 }
 </style>
 ```{r Load Packages, echo = FALSE, warning = FALSE, message = FALSE}
-# Load packages -----------------------------------------------------------------------------------
-# # Load packages -----------------------------------------------------------------------------------
 suppressMessages({
-  memory.limit(size = 8000000)
+  memory.limit(size = 10000000)
   library(readxl)
   library(writexl)
   library(plyr)
@@ -108,7 +106,7 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
-  # library(zipcodeR)
+  #library(zipcode)
   library(utils)
   library(scales)
   library(chron)
@@ -152,31 +150,9 @@ suppressMessages({
   library(shinyjs)
   library(janitor)
   library(patchwork)
-  # library(flexdashboard)
-  # library(tidyverse)
-  # library(viridis)
-  # library(hrbrthemes)
-  # library(plotly)
-  # install.packages("bsts")
-  # library(bsts)
-  library(reactable)
-  # install.packages("reactablefmtr")
-  library(reactablefmtr)
-  library(svDialogs)
-  # library(openxlsx)
-  library(flextable)
-  library(officedown)
-  library(officer)
-  library(magrittr)
-  library(webshot) 
-  library(png)
-  library(ggh4x)
   library(RODBC)
   library(DBI)
   library(odbc)
-  library(dbplyr)
-  library(pool)
-  library(emojifont)
 })
 
 ```
