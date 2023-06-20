@@ -152,7 +152,7 @@ suppressMessages({
   library(shinyjs)
   library(janitor)
   library(patchwork)
-  library(flexdashboard)
+  # library(flexdashboard)
   # library(tidyverse)
   # library(viridis)
   # library(hrbrthemes)
