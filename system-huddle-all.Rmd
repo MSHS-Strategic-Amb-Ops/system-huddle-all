@@ -385,6 +385,7 @@ hh_data_comp <- hh_data_comp_raw %>%
 colnames(hh_data_comp_raw_pt_entry) <- tolower(colnames(hh_data_comp_raw_pt_entry))
 hh_data_comp_pt_entry <- hh_data_comp_raw_pt_entry %>%
   rename(date = data_date) %>%
+  mutate(site = ifelse(site == "MSH", "MSDFP", site)) %>%
   mutate_if(is.numeric, as.character) 
 
 hh_data_comp_pt_entry$date <- as.character(hh_data_comp_pt_entry$date)
@@ -543,7 +544,7 @@ invisible(gc())
 scheduling_data <- scheduling_data %>%
   mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear),
          Visit.Method  = case_when(Visit.Method == "IN PERSON" ~ 'IN PERSON',TRUE ~ 'TELEHEALTH'),
-         New.PT2 = case_when(New.PT2 == "New" ~ 'New', TRUE ~ 'Established'),
+         # New.PT2 = case_when(New.PT2 == "New" ~ 'New', TRUE ~ 'Established'),
          # New.PT3 = case_when(New.PT3 == "TRUE" ~ 'New',TRUE ~ 'Established'),
          enc.status = case_when(ENC_CLOSED_CHARGE_STATUS %in% c("OPEN", "CLOSED BUT COSIGN NEEDED") ~ 'OPEN',TRUE ~ 'CLOSED'),
          open.hours = ifelse(enc.status == "OPEN",
