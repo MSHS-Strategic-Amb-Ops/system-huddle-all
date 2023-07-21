@@ -252,7 +252,11 @@ inc_sites <- c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY 
 
 
 scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds")) %>%
-   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
+  mutate(Campus = case_when(Campus == "MSDD" ~ "MSDMG",
+                            TRUE ~ Campus),
+         Campus = case_when(Department %in% c("1176 5TH DUBIN MED ONC", "1176 5TH DUBIN SURG ONC") ~ "DUBIN",
+                            Department %in% c("1468 MADISON CANCER", "1470 MADISON CANCER CENTER") ~ "RTC",
+                            TRUE ~ Campus)) %>%
   filter(!is.na(Campus)) %>%
   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 
