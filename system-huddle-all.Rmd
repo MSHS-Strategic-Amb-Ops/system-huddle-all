@@ -653,6 +653,7 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 *Rad Onc and Radiology data is included only in monthly volumes.*<br/>
 *A Full week is comprised of Sunday to Saturday.*<br/>
 *Data excludes eIDX, MD Office data.*<br/>
+*MSH-AMB CARE excludes RTC and Dubin data.*<br/>
 ________________________________________________________________________________________________________________________________________________
 <br/>
 
