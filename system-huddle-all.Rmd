@@ -255,7 +255,7 @@ scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/
   mutate(Campus = case_when(Campus == "MSDD" ~ "MSDMG",
                             TRUE ~ Campus),
          Campus = case_when(Department %in% c("1176 5TH DUBIN MED ONC", "1176 5TH DUBIN SURG ONC") ~ "DUBIN",
-                            Department %in% c("1468 MADISON CANCER", "1470 MADISON CANCER CENTER") ~ "RTC",
+                            Department %in% c("1468 MADISON CANCER", "1470 MADISON CANCER CENTER", "10 E 102ND ST INFUSION WHITE BAG", "THERAPEUTIC INF") ~ "RTC",
                             TRUE ~ Campus)) %>%
   filter(!is.na(Campus)) %>%
   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
