@@ -369,13 +369,10 @@ radiology_date <- paste0(radiology_data_raw[nrow(radiology_data_raw),"Appt.Month
 colnames(hh_data_comp_raw) <- tolower(colnames(hh_data_comp_raw))
 # colnames(hh_data_comp_raw)[which(colnames(hh_data_comp_raw) == "data_date")] <- "date"
 # # Map MSD units
-# hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSD",
-#                                 hh_crosswalk$unit[match(hh_data_comp_raw$msd_unit, hh_crosswalk$Location)], hh_data_comp_raw$site)
-# # Map msh_unit
-# hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSH",
-#                                 hh_crosswalk$unit[match(hh_data_comp_raw$msh_unit, hh_crosswalk$Location)], hh_data_comp_raw$site)
-
-hh_data_comp_raw$site <- ifelse(is.na(hh_data_comp_raw$site),
+hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSD",
+                                hh_crosswalk$unit[match(trim(hh_data_comp_raw$msd_unit), trim(hh_crosswalk$Location))], hh_data_comp_raw$site)
+# Map msh_unit
+hh_data_comp_raw$site<- ifelse(hh_data_comp_raw$site == "MSH",
                                 hh_crosswalk$unit[match(trim(hh_data_comp_raw$msh_unit), trim(hh_crosswalk$Location))], hh_data_comp_raw$site)
 
 hh_data_comp <- hh_data_comp_raw %>%
