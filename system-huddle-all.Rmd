@@ -1281,9 +1281,16 @@ invisible(gc())
 
 ```{r Primary Care New Percent Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
 
+# Manually exclude departments from wait time access ---------------------------
+time_to_appt_dept_excl <- c("5 E 98TH ST PREOP", 
+                           "MSH CONDITION MANAGEMENT",
+                           "VISITING DOCS HOUSE CALL",
+                           "VISITING DOCTORS")
+
 # New Patients Scheduled within 14 days --------------------------------------------------------------------
 new_perc_trend <- scheduling_data %>%
   filter(Campus != "MSBI") %>%
+  filter(Department %!in% time_to_appt_dept_excl) %>%
   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
   # filter(Appt.Made.Year == 2023) %>%
   filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.Made.DateYear <= date_end) %>%
