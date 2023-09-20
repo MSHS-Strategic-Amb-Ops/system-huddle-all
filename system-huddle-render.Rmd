@@ -7,15 +7,15 @@ date: "2023-09-20"
 
 ```{r cars}
 library(rmarkdown)
-library(conflicted)
+# library(conflicted)
 
-conflict_prefer("filter", "dplyr")
-conflict_prefer("mutate", "dplyr")
-conflict_prefer("arrange", "dplyr")
-conflict_prefer("summarise", "dplyr")
-conflict_prefer_all("dplyr", c("plyr","stats"))
-conflict_prefer("percent", "scales")
-conflict_prefer("style", "plotly")
+# conflict_prefer("filter", "dplyr")
+# conflict_prefer("mutate", "dplyr")
+# conflict_prefer("arrange", "dplyr")
+# conflict_prefer("summarise", "dplyr")
+# conflict_prefer_all("dplyr", c("plyr","stats"))
+# conflict_prefer("percent", "scales")
+# conflict_prefer("style", "plotly")
 
 
 rmarkdown::render(input = "system-huddle-all.Rmd",
