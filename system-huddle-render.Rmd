@@ -11,6 +11,7 @@ library(conflicted)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("mutate", "dplyr")
 conflict_prefer("arrange", "dplyr")
+conflict_prefer("summarise", "dplyr")
 
 rmarkdown::render(input = "system-huddle-all.Rmd",
                   output_format = "html_document",
