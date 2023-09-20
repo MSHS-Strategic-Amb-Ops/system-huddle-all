@@ -4,6 +4,7 @@ output: html_document
 date: "2023-09-20"
 ---
 
+
 ```{r cars}
 library(rmarkdown)
 library(conflicted)
@@ -14,6 +15,7 @@ conflict_prefer("arrange", "dplyr")
 conflict_prefer("summarise", "dplyr")
 conflict_prefer_all("dplyr", c("plyr","stats"))
 conflict_prefer("percent", "scales")
+conflict_prefer("style", "plotly")
 
 
 rmarkdown::render(input = "system-huddle-all.Rmd",
