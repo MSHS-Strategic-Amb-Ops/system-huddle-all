@@ -1,6 +1,6 @@
 ---
 params:
-  output_dir: "/nfs/data/Applications/Ambulatory"
+  output_dir: "/nfs/data/Applications/Ambulatory/"
 output:
   html_document:
     toc: yes
