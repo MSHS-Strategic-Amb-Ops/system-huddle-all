@@ -7,20 +7,13 @@ date: "2023-09-20"
 
 ```{r cars}
 library(rmarkdown)
-# library(conflicted)
+library(lubridate)
 
-# conflict_prefer("filter", "dplyr")
-# conflict_prefer("mutate", "dplyr")
-# conflict_prefer("arrange", "dplyr")
-# conflict_prefer("summarise", "dplyr")
-# conflict_prefer_all("dplyr", c("plyr","stats"))
-# conflict_prefer("percent", "scales")
-# conflict_prefer("style", "plotly")
-
+sending_date <- format(Sys.Date()+1, "%m%d%y")
 
 rmarkdown::render(input = "system-huddle-all.Rmd",
                   output_format = "html_document",
-                  output_file = "system_huddle_test",
+                  output_file = paste0("System Huddle Report_", sending_date),
                   output_dir = "/nfs/data/Applications/Ambulatory/",
                   params = list(output_dir = "/nfs/data/Applications/Ambulatory/"))
 
