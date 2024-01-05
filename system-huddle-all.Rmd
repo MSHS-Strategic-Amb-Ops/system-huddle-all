@@ -22,11 +22,9 @@ resource_files:
 - Epic Department Mapping Correction.csv
 - open_encounters_exclusion.xlsx
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
-
 <style type="text/css">
 div.main-container {
   max-width: 2000px;
@@ -262,14 +260,14 @@ scheduling_data_raw <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/
                             Department %in% c("1468 MADISON CANCER", "1470 MADISON CANCER CENTER", "10 E 102ND ST INFUSION WHITE BAG", "THERAPEUTIC INF") ~ "RTC",
                             TRUE ~ Campus)) %>%
   filter(!is.na(Campus)) %>%
-  filter(Campus %in% inc_sites)
+  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG","MSQ","MSSN"))
 
 # scheduling_data_raw <- as.data.frame(readRDS(file.choose())) %>%
 #   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
 #   filter(!is.na(Campus)) %>%
 #   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG"))
 
-date_start <- as.Date("2023-01-01", format="%Y-%m-%d")
+date_start <- as.Date("2022-01-01", format="%Y-%m-%d")
 date_end <- as.Date(max(scheduling_data_raw$Appt.Made.DTTM), format="%Y-%m-%d")
 
 todays_year <- format(date_end, "%Y")
@@ -434,8 +432,8 @@ hh_data_merged <- hh_data_comp %>%
             mt_hands_aft = sum(mt_hands_aft)) %>%
   mutate(date = as.Date(date, "%Y-%m-%d"),
          Appt.Year = as.numeric(format(as.Date(date, "%Y-%m-%d"),"%Y")),
-         Appt.WeekNum = lubridate::epiweek(as.Date(date, "%Y-%m-%d"))) 
-  # filter(Appt.Year >= as.numeric(todays_year))
+         Appt.WeekNum = lubridate::epiweek(as.Date(date, "%Y-%m-%d"))) %>%
+  filter(Appt.Year >= as.numeric(todays_year))
 
 hh_data_merged_role <- hh_data_comp %>%
   filter(!site %in% c("MS NOW", "MSHP", "NYEE", "MSQ","OTHER")) %>%
@@ -451,7 +449,7 @@ hh_data_merged_role <- hh_data_comp %>%
   filter(compliance != "") %>%
 # filter(!is.na(compliance)) %>%
   filter(compliance != 2) %>%
-  # filter(Appt.Year >= as.numeric(todays_year)) %>%
+  filter(Appt.Year >= as.numeric(todays_year)) %>%
   group_by(site, unit, date, Appt.Year, Appt.WeekNum, role, compliance) %>%
   summarise(total_obs = n())%>%
   mutate(compliance = ifelse(compliance == 0, "No", "Yes"),
@@ -544,12 +542,10 @@ reporting_week <- paste0("from Sunday, ",todays_date, " to Saturday, ",todays_da
 
 ```{r Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
 # Scheduling Data
-# scheduling_data <- scheduling_data_raw %>%
-#   filter(!Campus %in% c("MSB", "MS NOW", "MSHP", "NYEE", "MSQ","OTHER","INPATIENT")) %>%
-#   filter(!is.na(Campus))
- 
-scheduling_data <- scheduling_data_raw 
-
+scheduling_data <- scheduling_data_raw %>%
+  filter(!Campus %in% c("MSB", "MS NOW", "MSHP", "NYEE", "MSQ","OTHER","INPATIENT")) %>%
+  filter(!is.na(Campus))
+  
 rm(scheduling_data_raw)
 invisible(gc())
 
@@ -580,8 +576,6 @@ epic_depts <- scheduling_data %>%
   summarise(total = n()) %>%
   dplyr::select(-total) %>%
   arrange(Campus, Campus.Specialty, Department)
-
-
 epic_depts_site <- function(site){
 
   epic_depts %>%
@@ -1013,7 +1007,7 @@ vol_trending <- vol_trending %>%
   # mutate(target_5_perc = round(`2022`*1.05)) %>%
   arrange(factor(Appt.Month, levels = monthOptions)) %>%
   arrange(Campus) %>%
-  mutate(perc_change = round(((`2024` - `2023`)/`2023`)*100, 0))
+  mutate(perc_change = round(((`2023` - `2022`)/`2022`)*100, 0))
 
 
 map(unique(vol_trending$Campus), function(x){
@@ -1030,8 +1024,8 @@ highchart() %>%
            labels = list(format = '{value:%m/%d}')
            # dateTimeLabelFormats = list(month = '%Y-%m')
            ) %>%
-  hc_add_series(name   = "2023 Total Visits",
-                data   = (vol_trending %>% filter(Campus == x))$`2023`,
+  hc_add_series(name   = "2022 Total Visits",
+                data   = (vol_trending %>% filter(Campus == x))$`2022`,
                 # type = 'column',
                 # color = '#a5a7a5'
                 marker = list(enabled= TRUE),
@@ -1039,8 +1033,8 @@ highchart() %>%
                 lineWidth=3,
                 lineColor='#a5a7a5'
                 ) %>%
-  hc_add_series(name = "2024 Total Visits",
-                data   = (vol_trending %>% filter(Campus == x))$`2024`,
+  hc_add_series(name = "2023 Total Visits",
+                data   = (vol_trending %>% filter(Campus == x))$`2023`,
                 marker = list(enabled= TRUE),
                 color='#212070',
                 lineWidth=3,
@@ -1081,7 +1075,7 @@ vol_trending_downtown <- vol_trending %>%
   # mutate(target_5_perc = round(`2022`*1.05)) %>%
   arrange(factor(Appt.Month, levels = monthOptions)) %>%
   arrange(Campus) %>%
-  mutate(perc_change = round(((`2024` - `2023`)/`2023`)*100, 0))
+  mutate(perc_change = round(((`2023` - `2022`)/`2022`)*100, 0))
 
 map(unique(vol_trending_downtown$Campus), function(x){
 highchart() %>%
@@ -1097,8 +1091,8 @@ highchart() %>%
            labels = list(format = '{value:%m/%d}')
            # dateTimeLabelFormats = list(month = '%Y-%m')
            ) %>%
-  hc_add_series(name   = "2023 Total Visits",
-                data   = (vol_trending_downtown %>% filter(Campus == x))$`2023`,
+  hc_add_series(name   = "2022 Total Visits",
+                data   = (vol_trending_downtown %>% filter(Campus == x))$`2022`,
                 # type = 'column',
                 # color = '#a5a7a5'
                 marker = list(enabled= TRUE),
@@ -1106,8 +1100,8 @@ highchart() %>%
                 lineWidth=3,
                 lineColor='#a5a7a5'
                 ) %>%
-  hc_add_series(name = "2024 Total Visits",
-                data   = (vol_trending_downtown %>% filter(Campus == x))$`2024`,
+  hc_add_series(name = "2023 Total Visits",
+                data   = (vol_trending_downtown %>% filter(Campus == x))$`2023`,
                 marker = list(enabled= TRUE),
                 color='#212070',
                 lineWidth=3,
@@ -1142,7 +1136,7 @@ invisible(gc())
 new_vol_trending <- scheduling_data %>%
   filter(Appt.Status == "Arrived") %>%
   # filter(Appt.Year == 2023) %>%
-  filter(Appt.DateYear >= as.Date("2023-01-01") & Appt.DateYear <= date_end) %>%
+  filter(Appt.DateYear >= as.Date("2022-06-01") & Appt.DateYear <= date_end) %>%
   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
   group_by(Campus, Appt.MonthYear, New.PT3) %>%
@@ -1197,7 +1191,7 @@ new_vol_trending_downtown <- scheduling_data %>%
   filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
   mutate(Campus = "MS Downtown") %>%
   # filter(Appt.Year == 2023) %>%
-  filter(Appt.DateYear >= as.Date("2023-01-01") & Appt.DateYear <= date_end) %>%
+  filter(Appt.DateYear >= as.Date("2022-12-01") & Appt.DateYear <= date_end) %>%
   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
   group_by(Campus, Appt.MonthYear, New.PT3) %>%
@@ -1301,7 +1295,7 @@ new_perc_trend <- scheduling_data %>%
   filter(Department %!in% time_to_appt_dept_excl) %>%
   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
   # filter(Appt.Made.Year == 2023) %>%
-  filter(Appt.Made.DateYear >= as.Date("2023-01-01") & Appt.Made.DateYear <= date_end) %>%
+  filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.Made.DateYear <= date_end) %>%
   # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
   filter(New.PT2 == "New") %>%
   # mutate(Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
@@ -3626,4 +3620,3 @@ for (i in epic_sites) {
   invisible(gc())
 }
 ```
-
