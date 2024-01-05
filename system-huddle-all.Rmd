@@ -22,9 +22,11 @@ resource_files:
 - Epic Department Mapping Correction.csv
 - open_encounters_exclusion.xlsx
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
+
 <style type="text/css">
 div.main-container {
   max-width: 2000px;
