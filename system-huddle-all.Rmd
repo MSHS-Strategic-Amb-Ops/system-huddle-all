@@ -292,22 +292,22 @@ todays_year <- format(date_end, "%Y")
 
 
 ```{r Import HH Data, echo = FALSE, warning = FALSE, message = FALSE}
-con_hh <- odbcConnect("handhygiene") # Connect to Server
-hh_data_comp_raw <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp") # Master Referrals Data
-
-hh_data_comp_raw_pt_entry <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP") # Master Referrals Data
+# con_hh <- odbcConnect("handhygiene") # Connect to Server
+# hh_data_comp_raw <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp") # Master Referrals Data
+# 
+# hh_data_comp_raw_pt_entry <- sqlQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP") # Master Referrals Data
 
 # Import Referrals+Visit Data --------------------------------------------------
-# con_hh <- dbConnect(odbc(),
-#                     Driver = "SQLServer",
-#                     Server = "10.2.42.69",
-#                     UID = "kweons01",
-#                     PWD = "Pasword01#PasPasword01#Pas",
-#                     Port = 1433)     
-# hh_data_comp_raw <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp")
-# hh_data_comp_raw <- as.data.frame(hh_data_comp_raw)
-# 
-# hh_data_comp_raw_pt_entry <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP")
+con_hh <- dbConnect(odbc(),
+                    Driver = "SQLServer",
+                    Server = "10.2.42.69",
+                    UID = "kweons01",
+                    PWD = "Pasword01#PasPasword01#Pas",
+                    Port = 1433)
+hh_data_comp_raw <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.amb_hand_hygiene_comp")
+hh_data_comp_raw <- as.data.frame(hh_data_comp_raw)
+
+hh_data_comp_raw_pt_entry <- dbGetQuery(con_hh, "SELECT * FROM qidm_dev.dbo.PT_AMB_HAND_HYGIENE_COMP")
 hh_data_comp_raw_pt_entry <- as.data.frame(hh_data_comp_raw_pt_entry)
 # hh_data_comp_raw <- hh_data_comp_raw %>%
 #   mutate_all(as.character) %>%
@@ -674,12 +674,12 @@ ________________________________________________________________________________
 site_cols <- c("#212070","#d80b8c","#00aeef","#7f7f7f","#ffc000","#7030a0","#c7c6ef","#fcc9e9","#c9f0ff","#dddedd")
 
 # Import in exclusion criteria
-# missing_exc_dept <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_dept.xlsx")
-# missing_exc_resource <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_res.xlsx")
-# missing_exc_visitType <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_visit.xlsx")
-missing_exc_dept <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_dept.xlsx")
-missing_exc_resource <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_res.xlsx")
-missing_exc_visitType <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_visit.xlsx")
+missing_exc_dept <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_dept.xlsx")
+missing_exc_resource <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_res.xlsx")
+missing_exc_visitType <- read_excel("/nfs/data/Applications/Ambulatory/open_encounters_exclusion_visit.xlsx")
+# missing_exc_dept <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_dept.xlsx")
+# missing_exc_resource <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_res.xlsx")
+# missing_exc_visitType <- read_excel("C:/Users/kweons01/Desktop/Strategic Initiatives - So Youn/Github/server-upload-updated/open_encounters_exclusion_visit.xlsx")
 
 # Based on Metric % Encounters Closed within 7 days
 # Missing Charges Trending by Site
