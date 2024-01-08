@@ -850,33 +850,33 @@ missing_exc_visitType <- read_excel("/nfs/data/Applications/Ambulatory/open_enco
 #### Epic Encounters Closed within 5 Days
 ```{r Open Encounters Metric Trending by Site 3, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 
-missing_chg_data_trend_5days <- scheduling_data %>%
-  filter(Appt.Year %in% c(2023,2022)) %>%
-  # filter(Appt.Year == 2022) %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Resource == "Provider") %>%
-  filter(Appt.DateYear <= missing_chg_cutOff) %>%
-   mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
-  # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
-  filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
-  filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
-  mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
-                                         ,TRUE ~ "NO")) %>%
-  filter(visit_exclude == "NO") %>%
-  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
-  summarise(total = n()) %>%
-   group_by(Campus, Appt.MonthYear) %>%
-  mutate(total.enc = sum(total)) %>%
-  pivot_wider(names_from = clo.5days,
-              values_from = total,
-              values_fill = 0) %>%
-  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
-  filter(enc.status == "CLOSED")
+# missing_chg_data_trend_5days <- scheduling_data %>%
+#   filter(Appt.Year %in% c(2023,2022)) %>%
+#   # filter(Appt.Year == 2022) %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Resource == "Provider") %>%
+#   filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#    mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
+#   # filter(Appt.DateYear >= as.Date("2022-06-01", "%Y-%m-%d")) %>%
+#   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO") %>%
+#   group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
+#   summarise(total = n()) %>%
+#    group_by(Campus, Appt.MonthYear) %>%
+#   mutate(total.enc = sum(total)) %>%
+#   pivot_wider(names_from = clo.5days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
+#   filter(enc.status == "CLOSED")
 
 # rm(missing_chg_data_trend_data)
 invisible(gc())
 
-# missing_chg_data_trend_5days <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_5days.rds"))
+missing_chg_data_trend_5days <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_5days.rds"))
 ```
 
 
@@ -923,32 +923,32 @@ invisible(gc())
 --------------------------------------------------------------------------------
 ```{r Open Encounters (5 Days) Metric Trending Summarized, fig.width=12, fig.height = 5, fig.align = 'center', echo = FALSE, warning = FALSE, message = FALSE}
 
-missing_chg_data_trend_downtown_5days <- scheduling_data %>%
-  filter(Appt.Year %in% c(2023,2022)) %>%
-   filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
-  filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Resource == "Provider") %>%
-  mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
-                                         ,TRUE ~ "NO")) %>%
-  filter(visit_exclude == "NO") %>%
-  filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
-  mutate(Campus = "MS Downtown") %>%
-  filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
-  # filter(Appt.DateYear <= missing_chg_cutOff) %>%
-  # filter(enc.status == "CLOSED") %>%
-  mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
-  group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
-  summarise(total = n()) %>%
-   group_by(Campus, Appt.MonthYear) %>%
-  mutate(total.enc = sum(total)) %>%
-  pivot_wider(names_from = clo.5days,
-              values_from = total,
-              values_fill = 0) %>%
-  mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
-  filter(enc.status == "CLOSED")
+# missing_chg_data_trend_downtown_5days <- scheduling_data %>%
+#   filter(Appt.Year %in% c(2023,2022)) %>%
+#    filter(Department %!in% unique(missing_exc_dept$DEPARTMENT)) %>%
+#   filter(Provider %!in% unique(missing_exc_resource$PROVIDER)) %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Resource == "Provider") %>%
+#   mutate(visit_exclude = case_when(str_detect(Appt.Type, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT") ~ "YES"
+#                                          ,TRUE ~ "NO")) %>%
+#   filter(visit_exclude == "NO") %>%
+#   filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
+#   mutate(Campus = "MS Downtown") %>%
+#   filter(Appt.DateYear >= date_start, Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(Appt.DateYear <= missing_chg_cutOff) %>%
+#   # filter(enc.status == "CLOSED") %>%
+#   mutate(clo.5days = case_when(open.days <= 5 ~ 'YES', TRUE ~ 'NO')) %>%
+#   group_by(Campus, Appt.MonthYear, enc.status, clo.5days) %>%
+#   summarise(total = n()) %>%
+#    group_by(Campus, Appt.MonthYear) %>%
+#   mutate(total.enc = sum(total)) %>%
+#   pivot_wider(names_from = clo.5days,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(clo.5days.perc = round((YES/(total.enc))*100,0)) %>%
+#   filter(enc.status == "CLOSED")
 
-# missing_chg_data_trend_downtown_5days <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_downtown_5days.rds"))
+missing_chg_data_trend_downtown_5days <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/missing_chg_data_trend_downtown_5days.rds"))
 
 invisible(gc())
 
@@ -1139,21 +1139,21 @@ invisible(gc())
 ### 3. New Patient Ratio Trending
 ```{r New Patient Volume Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
 
-new_vol_trending <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  # filter(Appt.Year == 2023) %>%
-  filter(Appt.DateYear >= as.Date("2022-06-01") & Appt.DateYear <= date_end) %>%
-  # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-  # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
-  group_by(Campus, Appt.MonthYear, New.PT3) %>%
-  summarise(total = n()) %>%
-  pivot_wider(names_from = New.PT3,
-              values_from = total,
-              values_fill = 0) %>%
-  mutate(total_vol = New + Established,
-         new_perc = round((New/(total_vol))*100,0))
+# new_vol_trending <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   # filter(Appt.Year == 2023) %>%
+#   filter(Appt.DateYear >= as.Date("2022-06-01") & Appt.DateYear <= date_end) %>%
+#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+#   group_by(Campus, Appt.MonthYear, New.PT3) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = New.PT3,
+#               values_from = total,
+#               values_fill = 0) %>%
+#   mutate(total_vol = New + Established,
+#          new_perc = round((New/(total_vol))*100,0))
 
-# new_vol_trending <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending.rds")) 
+new_vol_trending <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending.rds"))
 
 map(unique(new_vol_trending$Campus), function(x){
 highchart() %>%
@@ -1191,23 +1191,23 @@ highchart() %>%
 
 --------------------------------------------------------------------------------
 ```{r New Patient Volume Trending Summarized, echo = FALSE, warning = FALSE, message = FALSE}
+# 
+# new_vol_trending_downtown <- scheduling_data %>%
+#   filter(Appt.Status == "Arrived") %>%
+#   filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
+#   mutate(Campus = "MS Downtown") %>%
+#   # filter(Appt.Year == 2023) %>%
+#   filter(Appt.DateYear >= as.Date("2022-12-01") & Appt.DateYear <= date_end) %>%
+#   # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
+#   # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
+#   group_by(Campus, Appt.MonthYear, New.PT3) %>%
+#   summarise(total = n()) %>%
+#   pivot_wider(names_from = New.PT3,
+#               values_from = total) %>%
+#   mutate(total_vol = New + Established,
+#          new_perc = round((New/(total_vol))*100,0))
 
-new_vol_trending_downtown <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Campus %in% c("MSUS","MSDMG","MSBI")) %>%
-  mutate(Campus = "MS Downtown") %>%
-  # filter(Appt.Year == 2023) %>%
-  filter(Appt.DateYear >= as.Date("2022-12-01") & Appt.DateYear <= date_end) %>%
-  # filter(Appt.DateYear >= date_start, Appt.DateYear <= date_end) %>%
-  # mutate(New.PT2 = ifelse(New.PT2 == "",FALSE,New.PT2)) %>%
-  group_by(Campus, Appt.MonthYear, New.PT3) %>%
-  summarise(total = n()) %>%
-  pivot_wider(names_from = New.PT3,
-              values_from = total) %>%
-  mutate(total_vol = New + Established,
-         new_perc = round((New/(total_vol))*100,0))
-
-# new_vol_trending_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending_downtown.rds")) 
+new_vol_trending_downtown <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_vol_trending_downtown.rds"))
 
 map(unique(new_vol_trending_downtown$Campus), function(x){
 highchart() %>%
@@ -1290,32 +1290,33 @@ invisible(gc())
 ```{r Primary Care New Percent Trending by Site, echo = FALSE, warning = FALSE, message = FALSE}
 
 # Manually exclude departments from wait time access ---------------------------
-time_to_appt_dept_excl <- c("5 E 98TH ST PREOP", 
-                           "MSH CONDITION MANAGEMENT",
-                           "VISITING DOCS HOUSE CALL",
-                           "VISITING DOCTORS")
+# time_to_appt_dept_excl <- c("5 E 98TH ST PREOP", 
+#                            "MSH CONDITION MANAGEMENT",
+#                            "VISITING DOCS HOUSE CALL",
+#                            "VISITING DOCTORS")
 
 # New Patients Scheduled within 14 days --------------------------------------------------------------------
-new_perc_trend <- scheduling_data %>%
-  filter(Campus != "MSBI") %>%
-  filter(Department %!in% time_to_appt_dept_excl) %>%
-  filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
-  # filter(Appt.Made.Year == 2023) %>%
-  filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.Made.DateYear <= date_end) %>%
-  # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
-  filter(New.PT2 == "New") %>%
-  # mutate(Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
-  filter(Wait.Time >= 0) %>%
-  mutate(Wait.Time = as.numeric(Wait.Time)) %>%
-  mutate(within.14 = ifelse(Wait.Time <= 14, "Yes","No")) %>%
-  group_by(Campus, Appt.Made.MonthYear, within.14) %>%
-  summarise(count = n()) %>%
-  pivot_wider(names_from = within.14,
-              values_from = count,
-              values_fill = 0) %>%
-  mutate(total = Yes + No,
-         new_14days = round((Yes/(total))*100))
+# new_perc_trend <- scheduling_data %>%
+#   filter(Campus != "MSBI") %>%
+#   filter(Department %!in% time_to_appt_dept_excl) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   # filter(Appt.Made.Year == 2023) %>%
+#   filter(Appt.Made.DateYear >= as.Date("2022-12-01") & Appt.Made.DateYear <= date_end) %>%
+#   # filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+#   filter(New.PT2 == "New") %>%
+#   # mutate(Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time)) %>%
+#   mutate(within.14 = ifelse(Wait.Time <= 14, "Yes","No")) %>%
+#   group_by(Campus, Appt.Made.MonthYear, within.14) %>%
+#   summarise(count = n()) %>%
+#   pivot_wider(names_from = within.14,
+#               values_from = count,
+#               values_fill = 0) %>%
+#   mutate(total = Yes + No,
+#          new_14days = round((Yes/(total))*100))
 
+new_perc_trend <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/new_perc_trend.rds"))
 
 map(unique(new_perc_trend$Campus), function(x){
 highchart() %>%
@@ -1755,18 +1756,18 @@ invisible(gc())
 
 ### 3. MSHS Time to Appointment
 ```{r MSHS Time to Appointment Metrics by Site, echo = FALSE, warning = FALSE, message = FALSE}
-time_to_appt_all <- scheduling_data %>%
-  filter(Campus != "MSBI") %>%
-  filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
-  # filter(New.PT2 == "New") %>%
-  # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
-  #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
-  # filter(Appt.Made.Year >= 2022) %>%
-  filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
-  filter(Wait.Time >= 0) %>%
-  mutate(Wait.Time = as.numeric(Wait.Time))
+# time_to_appt_all <- scheduling_data %>%
+#   filter(Campus != "MSBI") %>%
+#   filter(Appt.Made.DateYear >= date_start, Appt.Made.DateYear <= date_end) %>%
+#   # filter(New.PT2 == "New") %>%
+#   # mutate(Appt.Made.Year = format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y"),
+#   #        Appt.Made.MonthYear = as.Date(paste0(format(as.Date(Appt.Made.DTTM, format="%m/%d/%Y"), "%Y-%m"), "-01"))) %>%
+#   # filter(Appt.Made.Year >= 2022) %>%
+#   filter(Campus.Specialty %in% c("Internal Medicine", "Family Medicine")) %>%
+#   filter(Wait.Time >= 0) %>%
+#   mutate(Wait.Time = as.numeric(Wait.Time))
 
-# time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
+time_to_appt_all <- as.data.frame(readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/time_to_appt_all.rds"))
 # time_to_appt_all <- as.data.frame(readRDS(file.choose()))
 
 # Time to Appointment by Visit Method and Patient Type ---------------------------------------------
