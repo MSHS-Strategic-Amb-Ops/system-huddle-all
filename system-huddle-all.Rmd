@@ -289,6 +289,8 @@ access_raw_tbl <- tbl(conn1, "MV_DM_PATIENT_ACCESS")
 
 ```{r Global Variables, echo = FALSE, warning = FALSE, message = FALSE}
 
+report_run_date <- Sys.Date()
+
 todays_year <- year(Sys.Date())
 prior_year <- year(Sys.Date())-1
 
@@ -535,11 +537,9 @@ scheduling_data <- access_raw_tbl %>%
 
 # System Huddle Ambulatory Report
 *Report run date: `r report_run_date`*<br/>
-*Report produced for week of `r reporting_week`*<br/>
-*Rad Onc and Radiology data is included only in monthly volumes.*<br/>
-*A Full week is comprised of Sunday to Saturday.*<br/>
+*Rad Onc and Radiology data included only in monthly volumes.*<br/>
 *Data excludes eIDX, MD Office data.*<br/>
-*MSH-AMB CARE excludes RTC and Dubin data.*<br/>
+*Data excludes RTC and Dubin data.*<br/>
 ________________________________________________________________________________________________________________________________________________
 <br/>
 
