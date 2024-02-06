@@ -564,21 +564,29 @@ missing_chg_cutOff <- paste0(format(as.Date(missing_chg_cutOff), "%Y-%m-%d"), " 
 
 
 missing_chg_data <- scheduling_data %>%
-  filter(Appt.Year %in% c(prior_year, todays_year)) %>%
+  filter(Appt.Year >= prior_year) %>%
   filter(DERIVED_STATUS_DESC == "Arrived") %>%
   filter(VISIT_PROV_STAFF_RESOURCE_C == 1) %>%
   filter(TO_DATE(missing_chg_cutOff,"YYYY-MM-DD HH24:MI:SS") >= APPT_DTTM) %>%
   mutate(clo.5days = ifelse(open.days <= 5, 'YES', 'NO')) %>%
-  filter(!DEPARTMENT_NAME %in% exc_depts) %>%
-  filter(!Provider %in% exc_providers) %>%
-  filter(!PRC_NAME %like% "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT")
+  group_by(Campus, DEPARTMENT_NAME, Provider, PRC_NAME, Appt.Year, Appt.MonNum, enc.status, clo.5days) %>%
+  summarise(total = n()) %>%
+  collect()
+  
+missing_chg_data <- missing_chg_data %>% 
+  filter(DEPARTMENT_NAME %!in% exc_depts) %>%
+  filter(Provider %!in% exc_providers) %>%
+  filter(!str_detect(PRC_NAME, "ECHO|SOCIAL|NURSE|NUTRITION|LAB|TREATMENT")) %>%
+  mutate(Appt.Month = format(as.Date(paste0(Appt.MonNum, "-01-", Appt.Year), "%m-%d-%Y"), "%b")) %>%
+  mutate(Appt.Year = as.character(Appt.Year)) %>%
+  mutate(Appt.MonthYear = paste0(Appt.Month,"-",Appt.Year))
 
 missing_chg_data_trend_5days <- missing_chg_data %>%
-  group_by(Campus, Appt.Year, Appt.MonNum, enc.status, clo.5days) %>%
+  group_by(Campus, Appt.Year, Appt.MonNum, Appt.MonthYear, enc.status, clo.5days) %>%
   summarise(total = n()) %>%
-  group_by(Campus, Appt.Year, Appt.MonNum,) %>%
-  mutate(total.enc = sum(total)) %>%
   collect() %>%
+  group_by(Campus, Appt.Year, Appt.MonthYear) %>%
+  mutate(total.enc = sum(total)) %>%
   pivot_wider(names_from = clo.5days,
               values_from = total,
               values_fill = 0) %>%
@@ -642,8 +650,8 @@ highchart() %>%
 }) %>%
   hw_grid(ncol = 2, rowheight = 400) %>% htmltools::browsable()
 
-rm(missing_chg_data_trend_5days)
-invisible(gc())
+# rm(missing_chg_data_trend_5days)
+# invisible(gc())
 
 ```
 --------------------------------------------------------------------------------
